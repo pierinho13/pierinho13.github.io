@@ -164,6 +164,9 @@ em, i {
 		margin-bottom: 2%;
 	}
 
+	.espacioParrafo{
+		margin-bottom: 10%;
+	}
 	#fijo {  
 		position:fixed;  
 		/* font-family:verdana,arial;   */

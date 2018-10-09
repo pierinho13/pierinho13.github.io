@@ -337,6 +337,10 @@ Créateur : Christophe HERMANN (@chrishrmnn)
 		margin-bottom: 4%;
 	}
 
+	.espacioParrafo{
+		margin-bottom: 10%;
+	}
+
 	#fijo {  
 		position:fixed;  
 		/* font-family:verdana,arial;   */
