@@ -24,7 +24,7 @@
 <body>
 
 	<!-- Header -->
-	<header role="banner">
+	<header id="fijo" role="banner">
 		<div class="container_16">
 				<hgroup>
 					<h1>Piero Rospigliosi</h1>
@@ -36,7 +36,7 @@
 				</figure>
 		</div>
 	</header>
-	
+	<div id="espacio"></div>
 	<!-- Contact -->
 	<!-- <section class="contactform clearfix">
 		<div class="container_16">
@@ -204,5 +204,12 @@
 <script src="scripts/placeholder.js"></script>
 <![endif]-->
 <script src="archivos/plugins.js"></script>
-
+<script>
+	$(function() {
+	console.log('Iniciando!!');
+	});
+	$('html, body').animate({
+        scrollTop: $("#espacio").offset().left
+    }, 500);
+	</script>
 </body></html>

@@ -36,7 +36,7 @@
 				</figure>
 		</div>
 	</header>
-	
+	<div id="espacio"></div>
 	<!-- Corps -->
 	<section role="main" class="container_16 clearfix">
 		<div class="grid_16">
@@ -58,5 +58,13 @@
 <script src="scripts/placeholder.js"></script>
 <![endif]-->
 <script src="../../archivos/plugins.js"></script>
+<script>
+        $(function() {
+        console.log('Iniciando!!');
+        });
+        $('html, body').animate({
+            scrollTop: $("#espacio").offset().left
+        }, 500);
+        </script>
 
 </body></html>

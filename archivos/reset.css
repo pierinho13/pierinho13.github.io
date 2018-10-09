@@ -155,4 +155,20 @@ em, i {
 		-webkit-transition: all 1s;
 	}
 
+	#espacio{
+		height: 5%;
+		margin-bottom: 10%;
+	}
+
+	#fijo {  
+		position:fixed;  
+		/* font-family:verdana,arial;   */
+		/* font-size:11pt;   */
+		padding: 10px 5px 10px 5px;    /* margen con valores: arriba - derecha - abajo - izquierda */   
+		top: 0px;                    /* Distancia hasta el borde superior */  
+		left: 0px;            /* Distancia hasta el borde izquierdo */ 
+		width:100%;  
+		/* background-color:#FCAF62;    */
+		z-index: 20;               /* hace que la capa sea opaca  */  
+	} 
 
