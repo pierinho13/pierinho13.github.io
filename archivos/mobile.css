@@ -279,10 +279,10 @@ Créateur : Christophe HERMANN (@chrishrmnn)
 	/***********
 	/* Pictos
 	***********/
-	.lieu, .dates, .phone, .mail, .site, .form, .twitter, .facebook, .dribbble, .skype {
+	.lieu, .dates, .phone, .mail, .site, .form, .twitter, .facebook, .dribbble {
 		background: url('../img/pictos-gris.png') no-repeat;
-		padding-left: 25px;
-		margin: 0 10px 1px 0;
+		/* padding-left: 25px;
+		margin: 0 10px 1px 0; */
 	}
 	
 	.lieu {
