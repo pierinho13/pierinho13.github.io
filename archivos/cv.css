@@ -215,12 +215,12 @@
 	
 	section[role=main] h3 {
 		border-bottom: 1px solid #e1e1e1;
-		padding: 0 0 20px 60px;
+		padding: 0 0 20px 00px;
 		margin-top: 0px;
 		position: relative;
  	}
 	
-	section[role=main] h3:after, h3:before {
+	/* section[role=main] h3:after, h3:before {
 		content: ' ';
 		display: block;
 		height: 50px;
@@ -228,7 +228,7 @@
 		position: absolute;
 		top: -15px;
 		width: 50px;
-	}
+	} */
 	
 	section[role=main] h3:before {
 		background-color: #33a4c9;
