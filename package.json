@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "deploy": "ng build --prod --base-href https://pierinho13.github.io && angular-cli-ghpages --no-silent --branch gh-pages --dir dist"
+    "deploy": "ng build --prod --base-href https://pierinho13.github.io && angular-cli-ghpages --no-silent --branch master --dir dist"
   },
   "private": true,
   "dependencies": {
