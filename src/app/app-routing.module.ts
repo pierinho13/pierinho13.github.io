@@ -39,6 +39,7 @@ import {AppTimelineDemoComponent} from './pages/app.timelinedemo.component';
 import {AppInvoiceComponent} from './pages/app.invoice.component';
 import {AppHelpComponent} from './pages/app.help.component';
 import {AppWizardComponent} from './pages/app.wizard.component';
+import { PrincipalComponent } from './demo/view/principal/principal.component';
 
 @NgModule({
     imports: [
@@ -46,7 +47,8 @@ import {AppWizardComponent} from './pages/app.wizard.component';
             {
                 path: '', component: AppMainComponent,
                 children: [
-                    {path: '', component: DashboardDemoComponent},
+                    {path: '', component: PrincipalComponent},
+                    {path: 'dashboard', component: DashboardDemoComponent},
                     {path: 'uikit/formlayout', component: FormLayoutDemoComponent},
                     {path: 'uikit/floatlabel', component: FloatLabelDemoComponent},
                     {path: 'uikit/invalidstate', component: InvalidStateDemoComponent},
