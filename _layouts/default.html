@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ page.title | default: site.title }}</title>
+  <title>K8sReady - {{ page.title | default: site.title }}</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E☸%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -249,11 +250,12 @@
 <body>
   <header class="header">
     <div class="header-content">
-      <a href="/" class="logo">Piero Rospigliosi</a>
+      <a href="/" class="logo">K8sReady</a>
       <nav>
         <ul class="nav">
           <li><a href="/" class="nav-link {% if page.url == '/' %}active{% endif %}">Inicio</a></li>
           <li><a href="/informacion" class="nav-link {% if page.url == '/informacion.html' or page.url == '/informacion/' %}active{% endif %}">Información</a></li>
+          <li><a href="/servicios" class="nav-link {% if page.url == '/servicios.html' or page.url == '/servicios/' %}active{% endif %}">Servicios</a></li>
           <li><a href="/contacto" class="nav-link {% if page.url == '/contacto.html' or page.url == '/contacto/' %}active{% endif %}">Contacto</a></li>
         </ul>
       </nav>
