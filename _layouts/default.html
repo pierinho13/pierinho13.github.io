@@ -20,12 +20,10 @@
       background-size: 200% 200%;
       animation: gradientShift 15s ease infinite;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+      padding: 0;
+      margin: 0;
       position: relative;
-      overflow: hidden;
+      overflow-x: hidden;
     }
     
     @keyframes gradientShift {
@@ -50,6 +48,88 @@
       100% { transform: translate(-50px, -50px); }
     }
     
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+      z-index: 1000;
+      padding: 20px 0;
+    }
+    
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      font-size: 1.5em;
+      font-weight: 700;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-decoration: none;
+      transition: transform 0.3s ease;
+    }
+    
+    .logo:hover {
+      transform: scale(1.05);
+    }
+    
+    .nav {
+      display: flex;
+      gap: 30px;
+      list-style: none;
+    }
+    
+    .nav-link {
+      color: #333;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 1em;
+      position: relative;
+      transition: color 0.3s ease;
+      padding: 5px 0;
+    }
+    
+    .nav-link:hover {
+      color: #667eea;
+    }
+    
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      transition: width 0.3s ease;
+    }
+    
+    .nav-link:hover::after,
+    .nav-link.active::after {
+      width: 100%;
+    }
+    
+    .nav-link.active {
+      color: #667eea;
+    }
+    
+    .main-content {
+      margin-top: 100px;
+      padding: 40px 20px;
+      min-height: calc(100vh - 100px);
+    }
+    
     .container {
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
@@ -57,8 +137,9 @@
       padding: 80px 60px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.2);
       text-align: center;
-      max-width: 600px;
+      max-width: 800px;
       width: 100%;
+      margin: 0 auto;
       position: relative;
       z-index: 1;
       animation: fadeInUp 0.8s ease-out;
@@ -141,6 +222,20 @@
     }
     
     @media (max-width: 768px) {
+      .header-content {
+        padding: 0 20px;
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .nav {
+        gap: 20px;
+      }
+      
+      .main-content {
+        margin-top: 120px;
+      }
+      
       .container {
         padding: 60px 40px;
       }
@@ -152,9 +247,24 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    {{ content }}
-  </div>
+  <header class="header">
+    <div class="header-content">
+      <a href="/" class="logo">Piero Rospigliosi</a>
+      <nav>
+        <ul class="nav">
+          <li><a href="/" class="nav-link {% if page.url == '/' %}active{% endif %}">Inicio</a></li>
+          <li><a href="/informacion" class="nav-link {% if page.url == '/informacion.html' or page.url == '/informacion/' %}active{% endif %}">Información</a></li>
+          <li><a href="/contacto" class="nav-link {% if page.url == '/contacto.html' or page.url == '/contacto/' %}active{% endif %}">Contacto</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  
+  <main class="main-content">
+    <div class="container">
+      {{ content }}
+    </div>
+  </main>
 </body>
 </html>
 

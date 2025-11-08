@@ -8,3 +8,6 @@ theme: minima
 plugins:
   - jekyll-feed
 
+# Permalinks
+permalink: pretty
+
