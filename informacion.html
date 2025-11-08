@@ -30,15 +30,21 @@ title: Información
 
 <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 40px;">
   <div style="flex: 1 1 250px;">
-    <img src="/assets/img/certificaciones/google-architect.png" alt="Google Cloud Architect" style="width: 100px;">
+    <a href="https://www.credly.com/earner/earned/badge/58513834-ef06-4723-a727-6c2ec3503ee0" target="_blank" rel="noopener noreferrer" class="cert-link">
+      <img src="/assets/img/certificaciones/google-architect.png" alt="Google Cloud Architect" style="width: 100px;">
+    </a>
     <p><strong>Google Cloud:</strong><br>Professional Cloud Architect</p>
   </div>
   <div style="flex: 1 1 250px;">
-    <img src="/assets/img/certificaciones/aws-architect.png" alt="AWS Solutions Architect" style="width: 100px;">
+    <a href="https://www.credly.com/earner/earned/badge/ffd7202d-9d85-4dae-bd00-618bc4491c87" target="_blank" rel="noopener noreferrer" class="cert-link">
+      <img src="/assets/img/certificaciones/aws-architect.png" alt="AWS Solutions Architect" style="width: 100px;">
+    </a>
     <p><strong>AWS:</strong><br>Solutions Architect Associate</p>
   </div>
   <div style="flex: 1 1 250px;">
-    <img src="/assets/img/certificaciones/azure-az104.svg" alt="Azure AZ-104" style="width: 100px;">
+    <a href="https://learn.microsoft.com/en-us/users/pierorospigliosibeltran-1791/credentials/52875d6c03e79a79?ref=https%3A%2F%2Fwww.linkedin.com%2F" target="_blank" rel="noopener noreferrer" class="cert-link">
+      <img src="/assets/img/certificaciones/azure-az104.svg" alt="Azure AZ-104" style="width: 100px;">
+    </a>
     <p><strong>Azure:</strong><br>Administrator Associate (AZ-104)</p>
   </div>
 </div>
@@ -78,5 +84,27 @@ title: Información
   a[href="/contacto"]:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+  }
+  
+  .cert-link {
+    display: inline-block;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    border-radius: 8px;
+    padding: 5px;
+  }
+  
+  .cert-link:hover {
+    transform: translateY(-5px) scale(1.05);
+    opacity: 0.9;
+  }
+  
+  .cert-link img {
+    transition: filter 0.3s ease;
+    border-radius: 4px;
+  }
+  
+  .cert-link:hover img {
+    filter: brightness(1.1);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
   }
 </style>
