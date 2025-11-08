@@ -1,0 +1,10 @@
+title: Piero Rospigliosi Beltran
+description: Personal website
+baseurl: ""
+url: "https://pierinho13.github.io"
+
+# Build settings
+theme: minima
+plugins:
+  - jekyll-feed
+
