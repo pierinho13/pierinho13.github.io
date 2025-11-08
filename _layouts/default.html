@@ -180,9 +180,38 @@
       width: 100%;
     }
     
-    .nav-link.active {
-      color: #667eea;
-    }
+      .nav-link.active {
+        color: #667eea;
+      }
+      
+      .lang-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: 20px;
+        padding-left: 20px;
+        border-left: 1px solid rgba(0,0,0,0.1);
+      }
+      
+      .lang-link {
+        color: #666;
+        text-decoration: none;
+        font-size: 0.9em;
+        font-weight: 500;
+        transition: color 0.3s ease;
+        padding: 4px 8px;
+        border-radius: 4px;
+      }
+      
+      .lang-link:hover {
+        color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+      }
+      
+      .lang-link.active {
+        color: #667eea;
+        font-weight: 600;
+      }
     
     .main-content {
       margin-top: 100px;
@@ -303,6 +332,14 @@
         font-size: 0.9em;
       }
       
+      .lang-selector {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        margin-top: 10px;
+        justify-content: center;
+      }
+      
       .main-content {
         margin-top: 120px;
       }
@@ -355,17 +392,37 @@
 <body>
   <header class="header">
     <div class="header-content">
-      <a href="/" class="logo">
+      {% assign current_lang = page.url | split: '/' | slice: 1, 1 | first %}
+      {% if current_lang == 'es' or current_lang == '' %}
+        <a href="/es/" class="logo">
+      {% else %}
+        <a href="/en/" class="logo">
+      {% endif %}
         <span class="logo-icon"></span>
         <span>K8sReady</span>
       </a>
-      <nav>
+      <nav style="display: flex; align-items: center; gap: 20px;">
         <ul class="nav">
-          <li><a href="/" class="nav-link {% if page.url == '/' %}active{% endif %}">Inicio</a></li>
-          <li><a href="/informacion" class="nav-link {% if page.url == '/informacion.html' or page.url == '/informacion/' %}active{% endif %}">Información</a></li>
-          <li><a href="/servicios" class="nav-link {% if page.url == '/servicios.html' or page.url == '/servicios/' %}active{% endif %}">Servicios</a></li>
-          <li><a href="/contacto" class="nav-link {% if page.url == '/contacto.html' or page.url == '/contacto/' %}active{% endif %}">Contacto</a></li>
+          {% assign current_lang = page.url | split: '/' | slice: 1, 1 | first %}
+          {% if current_lang == 'es' or current_lang == '' %}
+            {% assign lang_prefix = '/es' %}
+            <li><a href="/es/" class="nav-link {% if page.url == '/es/' or page.url == '/es/index.html' %}active{% endif %}">Inicio</a></li>
+            <li><a href="/es/informacion" class="nav-link {% if page.url == '/es/informacion.html' or page.url == '/es/informacion/' %}active{% endif %}">Información</a></li>
+            <li><a href="/es/servicios" class="nav-link {% if page.url == '/es/servicios.html' or page.url == '/es/servicios/' %}active{% endif %}">Servicios</a></li>
+            <li><a href="/es/contacto" class="nav-link {% if page.url == '/es/contacto.html' or page.url == '/es/contacto/' %}active{% endif %}">Contacto</a></li>
+          {% else %}
+            {% assign lang_prefix = '/en' %}
+            <li><a href="/en/" class="nav-link {% if page.url == '/en/' or page.url == '/en/index.html' %}active{% endif %}">Home</a></li>
+            <li><a href="/en/information" class="nav-link {% if page.url == '/en/information.html' or page.url == '/en/information/' %}active{% endif %}">Information</a></li>
+            <li><a href="/en/services" class="nav-link {% if page.url == '/en/services.html' or page.url == '/en/services/' %}active{% endif %}">Services</a></li>
+            <li><a href="/en/contact" class="nav-link {% if page.url == '/en/contact.html' or page.url == '/en/contact/' %}active{% endif %}">Contact</a></li>
+          {% endif %}
         </ul>
+        <div class="lang-selector">
+          <a href="/es/" class="lang-link {% if current_lang == 'es' or current_lang == '' %}active{% endif %}">🇪🇸 ES</a>
+          <span style="color: #ccc;">|</span>
+          <a href="/en/" class="lang-link {% if current_lang == 'en' %}active{% endif %}">🇬🇧 EN</a>
+        </div>
       </nav>
     </div>
   </header>
