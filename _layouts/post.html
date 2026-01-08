@@ -1,0 +1,289 @@
+---
+layout: default
+---
+
+<article class="blog-post">
+  <a href="{% if page.lang == 'es' %}/es/blog{% else %}/en/blog{% endif %}" class="back-link">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M19 12H5M12 19l-7-7 7-7"></path>
+    </svg>
+    {% if page.lang == 'es' %}Volver al blog{% else %}Back to blog{% endif %}
+  </a>
+
+  <header class="post-header">
+    <h1 class="post-title">{{ page.title }}</h1>
+    <div class="post-meta">
+      <time datetime="{{ page.date | date_to_xmlschema }}">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        {% if page.lang == 'es' %}
+          {{ page.date | date: "%d de %B, %Y" }}
+        {% else %}
+          {{ page.date | date: "%B %d, %Y" }}
+        {% endif %}
+      </time>
+      <span class="reading-time">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        {% assign words = content | number_of_words %}
+        {% assign minutes = words | divided_by: 200 %}
+        {% if minutes < 1 %}{% assign minutes = 1 %}{% endif %}
+        {% if page.lang == 'es' %}
+          {{ minutes }} min de lectura
+        {% else %}
+          {{ minutes }} min read
+        {% endif %}
+      </span>
+    </div>
+  </header>
+
+  {% if page.image %}
+  <div class="post-image">
+    <img src="{{ page.image }}" alt="{{ page.title }}">
+  </div>
+  {% endif %}
+
+  <div class="post-content">
+    {{ content }}
+  </div>
+
+  <footer class="post-footer">
+    <a href="{% if page.lang == 'es' %}/es/blog{% else %}/en/blog{% endif %}" class="back-link-footer">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M19 12H5M12 19l-7-7 7-7"></path>
+      </svg>
+      {% if page.lang == 'es' %}Ver más artículos{% else %}View more articles{% endif %}
+    </a>
+  </footer>
+</article>
+
+<style>
+  .blog-post {
+    text-align: left;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95em;
+    margin-bottom: 30px;
+    transition: all 0.3s ease;
+  }
+
+  .back-link:hover {
+    color: #764ba2;
+    transform: translateX(-5px);
+  }
+
+  .post-header {
+    margin-bottom: 40px;
+    padding-bottom: 30px;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+  }
+
+  .post-title {
+    font-size: 2.5em !important;
+    font-weight: 700 !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 20px !important;
+    line-height: 1.3;
+  }
+
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    color: #888;
+    font-size: 0.95em;
+    flex-wrap: wrap;
+  }
+
+  .post-meta time,
+  .post-meta .reading-time {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .post-meta svg {
+    color: #667eea;
+  }
+
+  .post-image {
+    margin-bottom: 40px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+  }
+
+  .post-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .post-content {
+    font-size: 1.1em;
+    line-height: 1.9;
+    color: #444;
+  }
+
+  .post-content h2 {
+    font-size: 1.6em;
+    font-weight: 600;
+    color: #333;
+    margin-top: 50px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+  }
+
+  .post-content h3 {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: #444;
+    margin-top: 35px;
+    margin-bottom: 15px;
+  }
+
+  .post-content p {
+    margin-bottom: 20px;
+    text-align: justify;
+  }
+
+  .post-content ul,
+  .post-content ol {
+    margin: 25px 0;
+    padding-left: 25px;
+  }
+
+  .post-content li {
+    margin-bottom: 12px;
+    line-height: 1.7;
+  }
+
+  .post-content code {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+  }
+
+  .post-content pre {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    padding: 25px;
+    border-radius: 12px;
+    overflow-x: auto;
+    margin: 30px 0;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  }
+
+  .post-content pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+    font-size: 0.9em;
+  }
+
+  .post-content blockquote {
+    border-left: 4px solid #667eea;
+    margin: 30px 0;
+    padding: 20px 25px;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 0 12px 12px 0;
+    font-style: italic;
+    color: #555;
+  }
+
+  .post-content strong {
+    color: #333;
+    font-weight: 600;
+  }
+
+  .post-content a {
+    color: #667eea;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .post-content a:hover {
+    border-bottom-color: #667eea;
+  }
+
+  .post-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin: 30px 0;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  }
+
+  .post-footer {
+    margin-top: 60px;
+    padding-top: 30px;
+    border-top: 2px solid rgba(102, 126, 234, 0.1);
+    text-align: center;
+  }
+
+  .back-link-footer {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  }
+
+  .back-link-footer:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+  }
+
+  @media (max-width: 768px) {
+    .post-title {
+      font-size: 1.8em !important;
+    }
+
+    .post-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .post-content {
+      font-size: 1em;
+    }
+
+    .post-content h2 {
+      font-size: 1.4em;
+    }
+
+    .post-content pre {
+      padding: 15px;
+      font-size: 0.85em;
+    }
+  }
+</style>
+

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>K8sReady - {{ page.title | default: site.title }}</title>
+  <title>K8sReady - Services</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E☸%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -399,38 +399,29 @@
 <body>
   <header class="header">
     <div class="header-content">
-      {% assign current_lang = page.url | split: '/' | slice: 1, 1 | first %}
-      {% if current_lang == 'es' or current_lang == '' %}
-        <a href="/es/" class="logo">
-      {% else %}
+      
+      
         <a href="/en/" class="logo">
-      {% endif %}
+      
         <span class="logo-icon"></span>
         <span>K8sReady</span>
       </a>
       <nav style="display: flex; align-items: center; gap: 20px;">
         <ul class="nav">
-          {% assign current_lang = page.url | split: '/' | slice: 1, 1 | first %}
-          {% if current_lang == 'es' or current_lang == '' %}
-            {% assign lang_prefix = '/es' %}
-            <li><a href="/es/" class="nav-link {% if page.url == '/es/' or page.url == '/es/index.html' %}active{% endif %}">Inicio</a></li>
-            <li><a href="/es/informacion" class="nav-link {% if page.url == '/es/informacion.html' or page.url == '/es/informacion/' %}active{% endif %}">Información</a></li>
-            <li><a href="/es/servicios" class="nav-link {% if page.url == '/es/servicios.html' or page.url == '/es/servicios/' %}active{% endif %}">Servicios</a></li>
-            <li><a href="/es/blog" class="nav-link {% if page.url == '/es/blog.html' or page.url == '/es/blog/' or page.layout == 'post' and page.lang == 'es' %}active{% endif %}">Blog</a></li>
-            <li><a href="/es/contacto" class="nav-link {% if page.url == '/es/contacto.html' or page.url == '/es/contacto/' %}active{% endif %}">Contacto</a></li>
-          {% else %}
-            {% assign lang_prefix = '/en' %}
-            <li><a href="/en/" class="nav-link {% if page.url == '/en/' or page.url == '/en/index.html' %}active{% endif %}">Home</a></li>
-            <li><a href="/en/information" class="nav-link {% if page.url == '/en/information.html' or page.url == '/en/information/' %}active{% endif %}">Information</a></li>
-            <li><a href="/en/services" class="nav-link {% if page.url == '/en/services.html' or page.url == '/en/services/' %}active{% endif %}">Services</a></li>
-            <li><a href="/en/blog" class="nav-link {% if page.url == '/en/blog.html' or page.url == '/en/blog/' or page.layout == 'post' and page.lang == 'en' %}active{% endif %}">Blog</a></li>
-            <li><a href="/en/contact" class="nav-link {% if page.url == '/en/contact.html' or page.url == '/en/contact/' %}active{% endif %}">Contact</a></li>
-          {% endif %}
+          
+          
+            
+            <li><a href="/en/" class="nav-link ">Home</a></li>
+            <li><a href="/en/information" class="nav-link ">Information</a></li>
+            <li><a href="/en/services" class="nav-link active">Services</a></li>
+            <li><a href="/en/blog" class="nav-link ">Blog</a></li>
+            <li><a href="/en/contact" class="nav-link ">Contact</a></li>
+          
         </ul>
         <div class="lang-selector">
-          <a href="/es/" class="lang-link {% if current_lang == 'es' or current_lang == '' %}active{% endif %}">🇪🇸 ES</a>
+          <a href="/es/" class="lang-link ">🇪🇸 ES</a>
           <span style="color: #ccc;">|</span>
-          <a href="/en/" class="lang-link {% if current_lang == 'en' %}active{% endif %}">🇬🇧 EN</a>
+          <a href="/en/" class="lang-link active">🇬🇧 EN</a>
         </div>
       </nav>
     </div>
@@ -438,7 +429,65 @@
   
   <main class="main-content">
     <div class="container">
-      {{ content }}
+      <h1>Professional services</h1>
+
+<h2>🔍 Cloud technical audit</h2>
+<p>Complete review of your infrastructure on AWS, GCP, or Azure, identifying risks, bottlenecks, and improvement opportunities in performance, security, cost, and observability.</p>
+
+<h2>☸️ Kubernetes migration</h2>
+<p>Planning and execution of monolith or VM migrations to microservices on GKE, EKS, or AKS. From day one, we design a scalable architecture with GitOps and automated deployments, ready to grow with you.</p>
+
+<h2>💰 Cost optimization and scaling</h2>
+<p>Reduction of operational costs through efficient node design, combined use of <strong>Karpenter</strong> and <strong>Cluster Autoscaler</strong>, environment segregation, and billing analysis. Savings without losing performance.</p>
+
+<h2>📊 Observability and traceability</h2>
+<p>Implementation of distributed tracing, proactive alerts, and actionable dashboards with <strong>Grafana, Prometheus, Loki, Mimir, Datadog, and OpenTelemetry</strong>. Real visibility into what matters.</p>
+
+<h2>🔐 Security in multi-cloud environments</h2>
+<p>Application of security best practices: least-privilege IAM, internal TLS, Kyverno for cluster policies, centralized secrets management (IRSA, KMS, Sealed Secrets), and private networks.</p>
+
+<h2>🛠️ Automation and GitOps</h2>
+<p>Automation of deployments and environment configuration with <strong>Terraform, Helm, GitHub Actions, and Argo CD</strong>. Error reduction and consistency across environments (draft, pre, prod, etc.).</p>
+
+<div style="margin-top: 50px;">
+  <a href="/en/contact" style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 12px; font-weight: 600; transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
+    Contact me →
+  </a>
+</div>
+
+<style>
+  h1 {
+    font-size: 2.5em !important;
+    margin-bottom: 40px !important;
+  }
+  
+  h2 {
+    color: #667eea;
+    font-size: 1.6em;
+    margin-top: 40px;
+    margin-bottom: 15px;
+    text-align: left;
+  }
+  
+  p {
+    font-size: 1.1em;
+    line-height: 1.8;
+    color: #555;
+    margin-bottom: 30px;
+    text-align: left;
+  }
+  
+  .container {
+    text-align: left;
+  }
+  
+  a[href="/en/contact"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+  }
+</style>
+
+
     </div>
   </main>
 </body>

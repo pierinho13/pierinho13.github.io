@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>K8sReady - {{ page.title | default: site.title }}</title>
+  <title>K8sReady - Bienvenido</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E☸%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -399,38 +399,29 @@
 <body>
   <header class="header">
     <div class="header-content">
-      {% assign current_lang = page.url | split: '/' | slice: 1, 1 | first %}
-      {% if current_lang == 'es' or current_lang == '' %}
+      
+      
         <a href="/es/" class="logo">
-      {% else %}
-        <a href="/en/" class="logo">
-      {% endif %}
+      
         <span class="logo-icon"></span>
         <span>K8sReady</span>
       </a>
       <nav style="display: flex; align-items: center; gap: 20px;">
         <ul class="nav">
-          {% assign current_lang = page.url | split: '/' | slice: 1, 1 | first %}
-          {% if current_lang == 'es' or current_lang == '' %}
-            {% assign lang_prefix = '/es' %}
-            <li><a href="/es/" class="nav-link {% if page.url == '/es/' or page.url == '/es/index.html' %}active{% endif %}">Inicio</a></li>
-            <li><a href="/es/informacion" class="nav-link {% if page.url == '/es/informacion.html' or page.url == '/es/informacion/' %}active{% endif %}">Información</a></li>
-            <li><a href="/es/servicios" class="nav-link {% if page.url == '/es/servicios.html' or page.url == '/es/servicios/' %}active{% endif %}">Servicios</a></li>
-            <li><a href="/es/blog" class="nav-link {% if page.url == '/es/blog.html' or page.url == '/es/blog/' or page.layout == 'post' and page.lang == 'es' %}active{% endif %}">Blog</a></li>
-            <li><a href="/es/contacto" class="nav-link {% if page.url == '/es/contacto.html' or page.url == '/es/contacto/' %}active{% endif %}">Contacto</a></li>
-          {% else %}
-            {% assign lang_prefix = '/en' %}
-            <li><a href="/en/" class="nav-link {% if page.url == '/en/' or page.url == '/en/index.html' %}active{% endif %}">Home</a></li>
-            <li><a href="/en/information" class="nav-link {% if page.url == '/en/information.html' or page.url == '/en/information/' %}active{% endif %}">Information</a></li>
-            <li><a href="/en/services" class="nav-link {% if page.url == '/en/services.html' or page.url == '/en/services/' %}active{% endif %}">Services</a></li>
-            <li><a href="/en/blog" class="nav-link {% if page.url == '/en/blog.html' or page.url == '/en/blog/' or page.layout == 'post' and page.lang == 'en' %}active{% endif %}">Blog</a></li>
-            <li><a href="/en/contact" class="nav-link {% if page.url == '/en/contact.html' or page.url == '/en/contact/' %}active{% endif %}">Contact</a></li>
-          {% endif %}
+          
+          
+            
+            <li><a href="/es/" class="nav-link active">Inicio</a></li>
+            <li><a href="/es/informacion" class="nav-link ">Información</a></li>
+            <li><a href="/es/servicios" class="nav-link ">Servicios</a></li>
+            <li><a href="/es/blog" class="nav-link ">Blog</a></li>
+            <li><a href="/es/contacto" class="nav-link ">Contacto</a></li>
+          
         </ul>
         <div class="lang-selector">
-          <a href="/es/" class="lang-link {% if current_lang == 'es' or current_lang == '' %}active{% endif %}">🇪🇸 ES</a>
+          <a href="/es/" class="lang-link active">🇪🇸 ES</a>
           <span style="color: #ccc;">|</span>
-          <a href="/en/" class="lang-link {% if current_lang == 'en' %}active{% endif %}">🇬🇧 EN</a>
+          <a href="/en/" class="lang-link ">🇬🇧 EN</a>
         </div>
       </nav>
     </div>
@@ -438,7 +429,231 @@
   
   <main class="main-content">
     <div class="container">
-      {{ content }}
+      <div class="hero-content">
+  <h1 class="hero-title">K8sReady</h1>
+  
+  <p class="hero-subtitle"><strong>Infraestructura Cloud moderna, segura y eficiente.</strong></p>
+  
+  <p class="hero-description">Soy <strong>Piero Rospigliosi</strong>, especialista en automatización, observabilidad y plataformas multi-cloud sobre <strong>AWS</strong>, <strong>GCP</strong>, <strong>Azure</strong> y <strong>Kubernetes</strong>. Acompaño a empresas en su transición hacia infraestructuras escalables, optimizadas y sin puntos de fricción.</p>
+  
+  <div class="hero-buttons">
+    <a href="/es/informacion" class="btn btn-primary">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+      </svg>
+      <span>Ver experiencia</span>
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M5 12h14M12 5l7 7-7 7"></path>
+      </svg>
+    </a>
+    <a href="/es/contacto" class="btn btn-secondary">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+      <span>Agendar revisión técnica gratuita</span>
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M5 12h14M12 5l7 7-7 7"></path>
+      </svg>
+    </a>
+  </div>
+
+  <p style="text-align: center; font-size: 0.95em; margin-top: 20px; color: #777;">
+    *Incluye revisión gratuita inicial sin compromiso.*
+  </p>
+</div>
+
+
+<style>
+  .hero-content {
+    position: relative;
+    z-index: 2;
+  }
+  
+  .hero-title {
+    font-size: 4.5em !important;
+    font-weight: 800 !important;
+    margin-bottom: 25px !important;
+    letter-spacing: -2px;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.4em !important;
+    font-weight: 600 !important;
+    color: #667eea !important;
+    margin-bottom: 25px !important;
+    line-height: 1.5;
+  }
+  
+  .hero-subtitle strong {
+    color: #667eea;
+  }
+  
+  .hero-description {
+    font-size: 1.15em !important;
+    line-height: 1.8 !important;
+    color: #555 !important;
+    margin-bottom: 45px !important;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .hero-description strong {
+    color: #667eea;
+    font-weight: 600;
+  }
+  
+  .hero-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 50px;
+  }
+  
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 35px;
+    font-size: 1.05em;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 14px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.3px;
+  }
+  
+  .btn svg:first-child {
+    flex-shrink: 0;
+  }
+  
+  .btn svg:last-child {
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.6);
+  }
+  
+  .btn-primary:hover svg:last-child {
+    transform: translateX(4px);
+  }
+  
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.95);
+    color: #667eea;
+    border: 2px solid #667eea;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+  }
+  
+  .btn-secondary:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+  }
+  
+  .btn-secondary:hover svg:last-child {
+    transform: translateX(4px);
+  }
+  
+  .decorative-svg {
+    position: absolute;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 120px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  .decorative-svg-top {
+    top: -60px;
+  }
+  
+  .decorative-svg-bottom {
+    bottom: -60px;
+    transform: rotate(180deg);
+  }
+  
+  @media (max-width: 768px) {
+    .hero-title {
+      font-size: 3em !important;
+      margin-bottom: 20px !important;
+    }
+    
+    .hero-subtitle {
+      font-size: 1.2em !important;
+      margin-bottom: 20px !important;
+    }
+    
+    .hero-description {
+      font-size: 1.05em !important;
+      margin-bottom: 35px !important;
+      padding: 0 10px;
+    }
+    
+    .hero-buttons {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 15px;
+      margin-top: 35px;
+    }
+    
+    .btn {
+      padding: 16px 25px;
+      font-size: 1em;
+      justify-content: center;
+    }
+    
+    .container {
+      padding: 50px 30px !important;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .hero-title {
+      font-size: 2.5em !important;
+    }
+    
+    .hero-subtitle {
+      font-size: 1.1em !important;
+    }
+    
+    .hero-description {
+      font-size: 1em !important;
+    }
+    
+    .btn {
+      padding: 14px 20px;
+      font-size: 0.95em;
+    }
+    
+    .container {
+      padding: 40px 25px !important;
+    }
+  }
+</style>
+
     </div>
   </main>
 </body>

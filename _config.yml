@@ -11,3 +11,11 @@ plugins:
 # Permalinks
 permalink: pretty
 
+# Blog defaults
+defaults:
+  - scope:
+      path: "_posts"
+      type: "posts"
+    values:
+      layout: "post"
+

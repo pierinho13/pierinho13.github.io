@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2026-01-08T14:28:50+01:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">K8sReady</title><subtitle>Infraestructura Cloud moderna, segura y eficiente</subtitle><entry xml:lang="es"><title type="html">Cilium en EKS vs GKE: por qué el networking en Kubernetes se siente más simple en GKE</title><link href="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks-es/" rel="alternate" type="text/html" title="Cilium en EKS vs GKE: por qué el networking en Kubernetes se siente más simple en GKE" /><published>2026-01-08T00:00:00+01:00</published><updated>2026-01-08T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks-es</id><content type="html" xml:base="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks-es/"><![CDATA[<p>Tras desplegar <strong>Cilium</strong> tanto en <strong>EKS</strong> como en <strong>GKE</strong>, hubo algo que se volvió muy evidente:</p>
+
+<p><strong>El networking es mucho más fácil de razonar en GKE.</strong></p>
+
+<p>No se trata de qué plataforma es “mejor”, sino de qué tan alineado está su modelo de red con la forma en la que Kubernetes fue diseñado originalmente.</p>
+
+<h2 id="el-networking-de-kubernetes-como-fue-concebido-gke">El networking de Kubernetes como fue concebido (GKE)</h2>
+
+<p>En GKE, el modelo de red de Kubernetes se siente natural y predecible. La mayoría de las cosas se comportan como esperas si entiendes los fundamentos de Kubernetes.</p>
+
+<p>Algunas características clave:</p>
+
+<ul>
+  <li>Los pods obtienen IPs desde <strong>rangos secundarios de la VPC</strong></li>
+  <li><strong>IPAM puede funcionar en modo <code class="language-plaintext highlighter-rouge">kubernetes</code></strong> sin fricción</li>
+  <li>Las IPs de los pods son <strong>ciudadanos de primera clase</strong> dentro de la VPC</li>
+  <li>La densidad de pods y el escalado son predecibles</li>
+  <li>Las funcionalidades avanzadas de Cilium funcionan con mínimos ajustes específicos de la plataforma</li>
+</ul>
+
+<p>Desde el punto de vista operativo, esto reduce mucho la carga mental. Piensas en términos de Kubernetes, no en limitaciones de infraestructura.</p>
+
+<h2 id="donde-eks-añade-fricción">Donde EKS añade fricción</h2>
+
+<p>EKS es una plataforma sólida, pero su networking está más acoplado a primitivas de infraestructura propias de AWS.</p>
+
+<p>En la práctica, esto introduce varias restricciones adicionales:</p>
+
+<ul>
+  <li>Las IPs de los pods están ligadas a <strong>ENIs</strong></li>
+  <li>El agotamiento de IPs requiere <strong>muchísima más planificación previa</strong></li>
+  <li>La densidad de pods depende del tipo de instancia EC2</li>
+  <li>Algunas funcionalidades de Cilium requieren cambiar el <strong>tipo de target del Load Balancer</strong> (instance vs IP)</li>
+  <li>El modelo mental pasa a ser <strong>infraestructura-céntrico</strong>, no Kubernetes-céntrico</li>
+</ul>
+
+<p>Nada de esto convierte a EKS en una mala plataforma. Pero sí implica que operar configuraciones avanzadas de red requiere un mayor conocimiento de los detalles internos de AWS y más disciplina operativa.</p>
+
+<h2 id="cilium-amplifica-las-diferencias">Cilium amplifica las diferencias</h2>
+
+<p>Cilium no es el problema. De hecho, funciona muy bien en ambas plataformas.</p>
+
+<p>Pero precisamente porque Cilium expone y se apoya en conceptos de networking nativos de Kubernetes, <strong>las diferencias entre plataformas se hacen más visibles</strong>:</p>
+
+<ul>
+  <li>En GKE, Cilium se siente como una extensión natural de la plataforma</li>
+  <li>En EKS, Cilium a menudo te obliga a revisar decisiones de red de bajo nivel</li>
+</ul>
+
+<p>Esto se nota especialmente cuando trabajas con:</p>
+<ul>
+  <li>Políticas FQDN</li>
+  <li>Control avanzado de egress</li>
+  <li>Integraciones con load balancers</li>
+  <li>Clústeres con alta densidad de pods</li>
+</ul>
+
+<h2 id="perspectiva-operativa">Perspectiva operativa</h2>
+
+<p>Desde el punto de vista de platform engineering, el soporte nativo de GKE para rangos secundarios elimina gran parte de la fricción operativa.</p>
+
+<p>Permite:</p>
+<ul>
+  <li>Escalar clústeres sin pensar constantemente en límites de IP</li>
+  <li>Aplicar políticas de red con menos sorpresas</li>
+  <li>Centrarse en abstracciones de Kubernetes en lugar de soluciones específicas del proveedor cloud</li>
+</ul>
+
+<p>En EKS, los mismos resultados son posibles, pero normalmente requieren <strong>más planificación, más restricciones y mayor disciplina operativa</strong>.</p>
+
+<h2 id="reflexión-final">Reflexión final</h2>
+
+<p>Esto no es un debate GKE vs EKS.</p>
+
+<p>Ambas plataformas están preparadas para producción y se usan ampliamente a gran escala.</p>
+
+<p>Pero si tu plataforma depende fuertemente de networking avanzado en Kubernetes, <strong>el modelo de red de GKE se siente más cercano a cómo Kubernetes quiere ser operado</strong>, y eso se traduce directamente en una menor carga cognitiva para los equipos de plataforma.</p>
+
+<p>A veces, menos sorpresas es la mejor característica.</p>
+
+<p>Si estás diseñando o evolucionando una plataforma Kubernetes y quieres comentar estos trade-offs, puedes <a href="/es/contact">contactar conmigo</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Tras desplegar Cilium tanto en EKS como en GKE, una diferencia quedó muy clara: el networking es significativamente más fácil de razonar en GKE.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://plus.unsplash.com/premium_photo-1744345196324-94c618a49bc3?q=80&amp;w=1770&amp;auto=format&amp;fit=crop&amp;ixlib=rb-4.1.0&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=800&amp;q=80" /><media:content medium="image" url="https://plus.unsplash.com/premium_photo-1744345196324-94c618a49bc3?q=80&amp;w=1770&amp;auto=format&amp;fit=crop&amp;ixlib=rb-4.1.0&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=800&amp;q=80" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Cilium on EKS vs GKE: why Kubernetes networking feels simpler on GKE</title><link href="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks/" rel="alternate" type="text/html" title="Cilium on EKS vs GKE: why Kubernetes networking feels simpler on GKE" /><published>2026-01-08T00:00:00+01:00</published><updated>2026-01-08T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks</id><content type="html" xml:base="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks/"><![CDATA[<p>After rolling out <strong>Cilium</strong> on both <strong>EKS</strong> and <strong>GKE</strong>, one thing became very clear to me:</p>
+
+<p><strong>Networking is much easier to reason about on GKE.</strong></p>
+
+<p>This is not about which platform is “better”, but about how closely the networking model aligns with how Kubernetes was originally designed to work.</p>
+
+<h2 id="kubernetes-networking-as-designed-gke">Kubernetes networking as designed (GKE)</h2>
+
+<p>On GKE, the Kubernetes networking model feels natural and predictable. Most things behave the way you expect them to if you understand Kubernetes fundamentals.</p>
+
+<p>Some key characteristics:</p>
+
+<ul>
+  <li>Pods receive IPs from <strong>secondary VPC ranges</strong></li>
+  <li><strong>IPAM can run in <code class="language-plaintext highlighter-rouge">kubernetes</code> mode</strong> without friction</li>
+  <li>Pod IPs are <strong>first-class citizens</strong> in the VPC</li>
+  <li>Pod density and scaling behave in a predictable way</li>
+  <li>Advanced Cilium features work with minimal platform-specific adjustments</li>
+</ul>
+
+<p>From an operator point of view, this removes a lot of mental overhead. You reason in Kubernetes terms, not in infrastructure constraints.</p>
+
+<h2 id="where-eks-adds-friction">Where EKS adds friction</h2>
+
+<p>EKS is a solid platform, but networking is more tightly coupled to AWS infrastructure primitives.</p>
+
+<p>In practice, this introduces additional constraints:</p>
+
+<ul>
+  <li>Pod IPs are tied to <strong>ENIs</strong></li>
+  <li>IP exhaustion requires <strong>much more upfront planning</strong></li>
+  <li>Pod density is constrained by EC2 instance types</li>
+  <li>Some Cilium features require changing <strong>Load Balancer target types</strong> (instance vs IP)</li>
+  <li>The mental model becomes <strong>infrastructure-driven</strong>, not Kubernetes-driven</li>
+</ul>
+
+<p>None of this makes EKS a bad platform. But it does mean that operating advanced networking setups requires deeper knowledge of AWS internals and more careful capacity planning.</p>
+
+<h2 id="cilium-amplifies-the-differences">Cilium amplifies the differences</h2>
+
+<p>Cilium itself is not the problem. In fact, it works very well on both platforms.</p>
+
+<p>However, because Cilium exposes and relies on Kubernetes-native networking concepts, <strong>platform differences become more visible</strong>:</p>
+
+<ul>
+  <li>On GKE, Cilium feels like a natural extension of the platform</li>
+  <li>On EKS, Cilium often forces you to revisit lower-level networking decisions</li>
+</ul>
+
+<p>This is especially noticeable when working with:</p>
+<ul>
+  <li>FQDN policies</li>
+  <li>Advanced egress control</li>
+  <li>Load balancer integrations</li>
+  <li>High pod density clusters</li>
+</ul>
+
+<h2 id="operational-perspective">Operational perspective</h2>
+
+<p>From a platform engineering point of view, GKE’s native support for secondary ranges removes a lot of operational friction.</p>
+
+<p>It allows you to:</p>
+<ul>
+  <li>Scale clusters without constantly thinking about IP limits</li>
+  <li>Apply network policies with fewer surprises</li>
+  <li>Focus on Kubernetes abstractions instead of cloud-specific workarounds</li>
+</ul>
+
+<p>On EKS, the same outcomes are possible, but they usually require <strong>more planning, more constraints, and more operational discipline</strong>.</p>
+
+<h2 id="final-thoughts">Final thoughts</h2>
+
+<p>This is not a GKE vs EKS debate.</p>
+
+<p>Both platforms are production-ready and widely used at scale.</p>
+
+<p>But if your platform relies heavily on advanced Kubernetes networking, <strong>GKE’s networking model feels closer to how Kubernetes wants to be operated</strong>, and that translates directly into lower cognitive load for platform teams.</p>
+
+<p>Sometimes, fewer surprises is the biggest feature.</p>
+
+<p>If you’re designing or evolving a Kubernetes platform and want to discuss these trade-offs, feel free to <a href="/en/contact">get in touch</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[After rolling out Cilium on both EKS and GKE, one difference became very clear: networking is significantly easier to reason about on GKE.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://plus.unsplash.com/premium_photo-1744345196324-94c618a49bc3?q=80&amp;w=1770&amp;auto=format&amp;fit=crop&amp;ixlib=rb-4.1.0&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=800&amp;q=80" /><media:content medium="image" url="https://plus.unsplash.com/premium_photo-1744345196324-94c618a49bc3?q=80&amp;w=1770&amp;auto=format&amp;fit=crop&amp;ixlib=rb-4.1.0&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=800&amp;q=80" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>

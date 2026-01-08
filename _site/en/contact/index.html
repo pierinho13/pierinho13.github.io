@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>K8sReady - {{ page.title | default: site.title }}</title>
+  <title>K8sReady - Contact</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E☸%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -399,38 +399,29 @@
 <body>
   <header class="header">
     <div class="header-content">
-      {% assign current_lang = page.url | split: '/' | slice: 1, 1 | first %}
-      {% if current_lang == 'es' or current_lang == '' %}
-        <a href="/es/" class="logo">
-      {% else %}
+      
+      
         <a href="/en/" class="logo">
-      {% endif %}
+      
         <span class="logo-icon"></span>
         <span>K8sReady</span>
       </a>
       <nav style="display: flex; align-items: center; gap: 20px;">
         <ul class="nav">
-          {% assign current_lang = page.url | split: '/' | slice: 1, 1 | first %}
-          {% if current_lang == 'es' or current_lang == '' %}
-            {% assign lang_prefix = '/es' %}
-            <li><a href="/es/" class="nav-link {% if page.url == '/es/' or page.url == '/es/index.html' %}active{% endif %}">Inicio</a></li>
-            <li><a href="/es/informacion" class="nav-link {% if page.url == '/es/informacion.html' or page.url == '/es/informacion/' %}active{% endif %}">Información</a></li>
-            <li><a href="/es/servicios" class="nav-link {% if page.url == '/es/servicios.html' or page.url == '/es/servicios/' %}active{% endif %}">Servicios</a></li>
-            <li><a href="/es/blog" class="nav-link {% if page.url == '/es/blog.html' or page.url == '/es/blog/' or page.layout == 'post' and page.lang == 'es' %}active{% endif %}">Blog</a></li>
-            <li><a href="/es/contacto" class="nav-link {% if page.url == '/es/contacto.html' or page.url == '/es/contacto/' %}active{% endif %}">Contacto</a></li>
-          {% else %}
-            {% assign lang_prefix = '/en' %}
-            <li><a href="/en/" class="nav-link {% if page.url == '/en/' or page.url == '/en/index.html' %}active{% endif %}">Home</a></li>
-            <li><a href="/en/information" class="nav-link {% if page.url == '/en/information.html' or page.url == '/en/information/' %}active{% endif %}">Information</a></li>
-            <li><a href="/en/services" class="nav-link {% if page.url == '/en/services.html' or page.url == '/en/services/' %}active{% endif %}">Services</a></li>
-            <li><a href="/en/blog" class="nav-link {% if page.url == '/en/blog.html' or page.url == '/en/blog/' or page.layout == 'post' and page.lang == 'en' %}active{% endif %}">Blog</a></li>
-            <li><a href="/en/contact" class="nav-link {% if page.url == '/en/contact.html' or page.url == '/en/contact/' %}active{% endif %}">Contact</a></li>
-          {% endif %}
+          
+          
+            
+            <li><a href="/en/" class="nav-link ">Home</a></li>
+            <li><a href="/en/information" class="nav-link ">Information</a></li>
+            <li><a href="/en/services" class="nav-link ">Services</a></li>
+            <li><a href="/en/blog" class="nav-link ">Blog</a></li>
+            <li><a href="/en/contact" class="nav-link active">Contact</a></li>
+          
         </ul>
         <div class="lang-selector">
-          <a href="/es/" class="lang-link {% if current_lang == 'es' or current_lang == '' %}active{% endif %}">🇪🇸 ES</a>
+          <a href="/es/" class="lang-link ">🇪🇸 ES</a>
           <span style="color: #ccc;">|</span>
-          <a href="/en/" class="lang-link {% if current_lang == 'en' %}active{% endif %}">🇬🇧 EN</a>
+          <a href="/en/" class="lang-link active">🇬🇧 EN</a>
         </div>
       </nav>
     </div>
@@ -438,7 +429,90 @@
   
   <main class="main-content">
     <div class="container">
-      {{ content }}
+      <h1>Let's get started?</h1>
+
+<p>Does your company need to scale, migrate, or modernize its infrastructure?<br>
+Schedule an exploratory call with me or write to me directly.<br>
+I collaborate on projects such as:</p>
+
+<ul>
+  <li>Technical audits</li>
+  <li>Kubernetes migrations</li>
+  <li>Hourly or custom projects</li>
+  <li>Managed DevOps services</li>
+</ul>
+
+<p>📧 <strong>piero.rospigliosib@gmail.com</strong><br>
+📍 Madrid / Remote<br>
+🔗 <a href="https://www.linkedin.com/in/piero-rospigliosi-beltran-cv" target="_blank" rel="noopener noreferrer">LinkedIn</a></p>
+
+<div style="margin-top: 40px;">
+  <a href="https://calendly.com/piero-rospigliosib/new-meeting" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 12px; font-weight: 600; transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
+    Schedule a meeting (Calendly) →
+  </a>
+</div>
+
+<style>
+  h1 {
+    font-size: 2.5em !important;
+    margin-bottom: 30px !important;
+  }
+
+  p {
+    font-size: 1.2em;
+    line-height: 1.8;
+    color: #555;
+    margin-bottom: 20px;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+    max-width: 600px;
+    margin: 30px auto;
+  }
+
+  li {
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    padding-left: 30px;
+    position: relative;
+    color: #555;
+  }
+
+  li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: #667eea;
+    font-weight: bold;
+  }
+
+  strong {
+    color: #667eea;
+  }
+
+  a[href^="https://calendly"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+  }
+
+  a[href^="https://www.linkedin"] {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  a[href^="https://www.linkedin"]:hover {
+    text-decoration: underline;
+  }
+</style>
+
+
+
+
+
     </div>
   </main>
 </body>
