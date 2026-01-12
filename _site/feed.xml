@@ -1,4 +1,206 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2026-01-08T14:28:50+01:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">K8sReady</title><subtitle>Infraestructura Cloud moderna, segura y eficiente</subtitle><entry xml:lang="es"><title type="html">Cilium en EKS vs GKE: por qué el networking en Kubernetes se siente más simple en GKE</title><link href="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks-es/" rel="alternate" type="text/html" title="Cilium en EKS vs GKE: por qué el networking en Kubernetes se siente más simple en GKE" /><published>2026-01-08T00:00:00+01:00</published><updated>2026-01-08T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks-es</id><content type="html" xml:base="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks-es/"><![CDATA[<p>Tras desplegar <strong>Cilium</strong> tanto en <strong>EKS</strong> como en <strong>GKE</strong>, hubo algo que se volvió muy evidente:</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2026-01-12T17:32:44+01:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">K8sReady</title><subtitle>Infraestructura Cloud moderna, segura y eficiente</subtitle><entry xml:lang="es"><title type="html">Exponiendo URLs internas y externas en GKE sin mezclar responsabilidades</title><link href="http://localhost:4000/2026/01/12/exponiendo-urls-internas-y-externas-en-gke-es/" rel="alternate" type="text/html" title="Exponiendo URLs internas y externas en GKE sin mezclar responsabilidades" /><published>2026-01-12T00:00:00+01:00</published><updated>2026-01-12T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/12/exponiendo-urls-internas-y-externas-en-gke-es</id><content type="html" xml:base="http://localhost:4000/2026/01/12/exponiendo-urls-internas-y-externas-en-gke-es/"><![CDATA[<p>Cuando diseñas una arquitectura en <strong>GCP con Kubernetes</strong>, una de las decisiones más importantes es <strong>cómo exponer tus URLs internas y externas sin mezclar responsabilidades ni comprometer seguridad</strong>.</p>
+
+<p>No es un problema de “qué funciona”, sino de <strong>qué modelo mental quieres imponer a tu plataforma</strong>.</p>
+
+<h2 id="urls-internas-accesibles-solo-desde-tu-red">URLs internas: accesibles solo desde tu red</h2>
+
+<p>Para servicios internos (backoffice, operaciones, APIs privadas), el patrón más limpio es usar un <strong>Internal Load Balancer</strong>.</p>
+
+<p>En este modelo:</p>
+
+<ul>
+  <li>El servicio solo tiene <strong>IP privada</strong></li>
+  <li>El acceso se realiza desde:
+    <ul>
+      <li>VPN</li>
+      <li>red corporativa</li>
+      <li>workloads internos en la VPC</li>
+    </ul>
+  </li>
+  <li>No existe ningún endpoint público alcanzable desde Internet</li>
+</ul>
+
+<p>En <strong>GKE</strong>, esto suele materializarse como:</p>
+
+<ul>
+  <li>Service o Ingress <strong>interno</strong></li>
+  <li>Traefik (u otro ingress) expuesto únicamente mediante un <strong>Internal Load Balancer</strong></li>
+  <li>Firewall y routing de red proporcionando el aislamiento real</li>
+</ul>
+
+<p>La ventaja clave es clara:</p>
+
+<blockquote>
+  <p>Lo interno <strong>no existe</strong> para Internet, ni siquiera por error de configuración de aplicación.</p>
+</blockquote>
+
+<p>Aquí el aislamiento no depende de headers, rutas o middlewares, sino de <strong>red</strong>.</p>
+
+<h2 id="urls-externas-expuestas-de-forma-controlada">URLs externas: expuestas de forma controlada</h2>
+
+<p>Para servicios públicos (webs, APIs públicas), el patrón habitual es un <strong>External HTTP(S) Load Balancer</strong>.</p>
+
+<p>Un diseño muy común y efectivo en GKE es:</p>
+
+<ul>
+  <li>External Load Balancer (con <strong>Cloud Armor</strong> si aplica)</li>
+  <li>El load balancer enruta tráfico hacia <strong>NEGs de GKE</strong></li>
+  <li>Los NEGs apuntan directamente a pods de <strong>Traefik</strong></li>
+  <li>Traefik se encarga del routing a los servicios dentro del clúster</li>
+</ul>
+
+<p>Puntos importantes de este enfoque:</p>
+
+<ul>
+  <li>Traefik <strong>no necesita IP pública propia</strong></li>
+  <li>El único punto accesible desde Internet es el Load Balancer</li>
+  <li>El acceso a los pods está limitado a la infraestructura de Google (health checks / proxies)</li>
+  <li>No existen NodePorts ni Load Balancers adicionales abiertos</li>
+</ul>
+
+<p>Este patrón reduce complejidad y funciona muy bien como <strong>edge público</strong>, manteniendo el control en el perímetro.</p>
+
+<h2 id="un-solo-gateway-dos-caminos-de-entrada">Un solo gateway, dos caminos de entrada</h2>
+
+<p>Aunque ambos patrones usen <strong>Traefik</strong> y <strong>Kubernetes</strong>, el objetivo de cada uno es distinto:</p>
+
+<ul>
+  <li><strong>Interno</strong>: aislamiento por red</li>
+  <li><strong>Externo</strong>: exposición controlada por perímetro (LB + WAF)</li>
+</ul>
+
+<p>Ambos flujos convergen en el mismo punto lógico dentro del clúster:</p>
+
+<ul>
+  <li>El tráfico interno llega a Traefik a través de un <strong>Internal Load Balancer</strong></li>
+  <li>El tráfico externo llega a Traefik a través de <strong>NEGs desde un External Load Balancer</strong></li>
+</ul>
+
+<p>El backend final es el mismo: <strong>los microservicios del clúster</strong>.<br />
+Lo que cambia es <strong>cómo</strong> se llega hasta ellos.</p>
+
+<h2 id="la-decisión-real">La decisión real</h2>
+
+<p>Puedes:</p>
+
+<ul>
+  <li>Usar Traefik para URLs privadas</li>
+  <li>Usar Traefik para URLs públicas</li>
+  <li>Compartir backend services si tiene sentido</li>
+</ul>
+
+<p>Pero nunca deberías <strong>confundir los puntos de entrada</strong>.</p>
+
+<p>La decisión no es “qué funciona”, sino:</p>
+
+<blockquote>
+  <p>qué nivel de aislamiento quieres y dónde colocas tu perímetro real.</p>
+</blockquote>
+
+<p>Diseñar bien esta separación desde el principio ahorra complejidad, reduce riesgo operativo y hace que la arquitectura sea mucho más fácil de razonar a largo plazo.</p>
+
+<p>Si estás diseñando o evolucionando una plataforma en GKE y quieres comentar estos patrones, puedes <a href="/es/contact">contactar conmigo</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Diseñar correctamente cómo exponer servicios internos y externos en Kubernetes es clave para mantener aislamiento, seguridad y claridad operativa en GCP.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/load-balancers.png" /><media:content medium="image" url="http://localhost:4000/assets/img/load-balancers.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Exposing Internal and External URLs in GKE Without Mixing Responsibilities</title><link href="http://localhost:4000/2026/01/12/gke-internal-external-urls-en/" rel="alternate" type="text/html" title="Exposing Internal and External URLs in GKE Without Mixing Responsibilities" /><published>2026-01-12T00:00:00+01:00</published><updated>2026-01-12T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/12/gke-internal-external-urls-en</id><content type="html" xml:base="http://localhost:4000/2026/01/12/gke-internal-external-urls-en/"><![CDATA[<p>When designing an architecture in <strong>GCP with Kubernetes</strong>, one of the most important decisions is <strong>how to expose internal and external URLs without mixing responsibilities or compromising security</strong>.</p>
+
+<p>This is not about “what works”, but about <strong>what mental model you want to enforce in your platform</strong>.</p>
+
+<h2 id="internal-urls-accessible-only-from-your-network">Internal URLs: accessible only from your network</h2>
+
+<p>For internal services (backoffice, operations, private APIs), the cleanest pattern is to use an <strong>Internal Load Balancer</strong>.</p>
+
+<p>In this model:</p>
+
+<ul>
+  <li>The service has <strong>only a private IP</strong></li>
+  <li>Access is limited to:
+    <ul>
+      <li>VPN</li>
+      <li>corporate network</li>
+      <li>internal workloads within the VPC</li>
+    </ul>
+  </li>
+  <li>There is no public endpoint reachable from the Internet</li>
+</ul>
+
+<p>In <strong>GKE</strong>, this is usually implemented as:</p>
+
+<ul>
+  <li>An <strong>internal</strong> Service or Ingress</li>
+  <li>Traefik (or another ingress controller) exposed only through an <strong>Internal Load Balancer</strong></li>
+  <li>Firewall rules and network routing providing real isolation</li>
+</ul>
+
+<p>The key advantage is clear:</p>
+
+<blockquote>
+  <p>Internal services <strong>do not exist</strong> for the Internet, not even due to application misconfiguration.</p>
+</blockquote>
+
+<p>Here, isolation does not rely on headers, paths, or middlewares, but on <strong>network boundaries</strong>.</p>
+
+<h2 id="external-urls-exposed-in-a-controlled-way">External URLs: exposed in a controlled way</h2>
+
+<p>For public services (websites, public APIs), the standard pattern is an <strong>External HTTP(S) Load Balancer</strong>.</p>
+
+<p>A very common and effective design in GKE is:</p>
+
+<ul>
+  <li>External Load Balancer (with <strong>Cloud Armor</strong>, if applicable)</li>
+  <li>The load balancer routes traffic to <strong>GKE NEGs</strong></li>
+  <li>NEGs point directly to <strong>Traefik pods</strong></li>
+  <li>Traefik handles routing to services inside the cluster</li>
+</ul>
+
+<p>Important characteristics of this approach:</p>
+
+<ul>
+  <li>Traefik <strong>does not need its own public IP</strong></li>
+  <li>The only Internet-facing component is the Load Balancer</li>
+  <li>Pod access is restricted to Google infrastructure (health checks / proxies)</li>
+  <li>No NodePorts or additional Load Balancers are exposed</li>
+</ul>
+
+<p>This pattern reduces complexity and works very well as a <strong>public edge</strong>, keeping control at the perimeter.</p>
+
+<h2 id="one-gateway-two-entry-paths">One gateway, two entry paths</h2>
+
+<p>Although both patterns use <strong>Traefik</strong> and <strong>Kubernetes</strong>, their goals are different:</p>
+
+<ul>
+  <li><strong>Internal</strong>: isolation through networking</li>
+  <li><strong>External</strong>: controlled exposure at the perimeter (LB + WAF)</li>
+</ul>
+
+<p>Both traffic flows converge at the same logical point inside the cluster:</p>
+
+<ul>
+  <li>Internal traffic reaches Traefik through an <strong>Internal Load Balancer</strong></li>
+  <li>External traffic reaches Traefik through <strong>NEGs from an External Load Balancer</strong></li>
+</ul>
+
+<p>The final backend is the same: <strong>the cluster’s microservices</strong>.<br />
+What changes is <strong>how</strong> traffic reaches them.</p>
+
+<h2 id="the-real-decision">The real decision</h2>
+
+<p>You can:</p>
+
+<ul>
+  <li>Use Traefik for private URLs</li>
+  <li>Use Traefik for public URLs</li>
+  <li>Share backend services when it makes sense</li>
+</ul>
+
+<p>But you should never <strong>mix entry points</strong>.</p>
+
+<p>The decision is not “what works”, but:</p>
+
+<blockquote>
+  <p>what level of isolation you want and where you place your real perimeter.</p>
+</blockquote>
+
+<p>Designing this separation correctly from the beginning reduces complexity, lowers operational risk, and makes the architecture much easier to reason about over time.</p>
+
+<p>If you are designing or evolving a GKE platform and want to discuss these patterns, you can <a href="/en/contact">contact me</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Designing how internal and external services are exposed in Kubernetes is key to preserving isolation, security, and operational clarity in GCP.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/load-balancers.png" /><media:content medium="image" url="http://localhost:4000/assets/img/load-balancers.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="es"><title type="html">Cilium en EKS vs GKE: por qué el networking en Kubernetes se siente más simple en GKE</title><link href="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks-es/" rel="alternate" type="text/html" title="Cilium en EKS vs GKE: por qué el networking en Kubernetes se siente más simple en GKE" /><published>2026-01-08T00:00:00+01:00</published><updated>2026-01-08T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks-es</id><content type="html" xml:base="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks-es/"><![CDATA[<p>Tras desplegar <strong>Cilium</strong> tanto en <strong>EKS</strong> como en <strong>GKE</strong>, hubo algo que se volvió muy evidente:</p>
 
 <p><strong>El networking es mucho más fácil de razonar en GKE.</strong></p>
 
