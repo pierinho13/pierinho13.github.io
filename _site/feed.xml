@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2026-01-16T18:09:36+01:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">K8sReady</title><subtitle>Infraestructura Cloud moderna, segura y eficiente</subtitle><entry xml:lang="en"><title type="html">Cilium BPF masquerade can break Workload Identity on GKE</title><link href="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-en/" rel="alternate" type="text/html" title="Cilium BPF masquerade can break Workload Identity on GKE" /><published>2026-01-16T00:00:00+01:00</published><updated>2026-01-16T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-en</id><content type="html" xml:base="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-en/"><![CDATA[<p>On GKE, <strong>Workload Identity Federation for GKE</strong> allows a Pod to obtain Google Cloud credentials <strong>without keys</strong> and with permissions defined in IAM. The idea is straightforward: the Pod uses a <strong>Kubernetes ServiceAccount (KSA)</strong>, which maps to a <strong>Google Service Account (GSA)</strong>, and calls to Google APIs are authorized using the GSA’s roles.</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2026-01-16T18:17:36+01:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">K8sReady</title><subtitle>Infraestructura Cloud moderna, segura y eficiente</subtitle><entry xml:lang="en"><title type="html">Cilium BPF masquerade can break Workload Identity on GKE</title><link href="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-en/" rel="alternate" type="text/html" title="Cilium BPF masquerade can break Workload Identity on GKE" /><published>2026-01-16T00:00:00+01:00</published><updated>2026-01-16T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-en</id><content type="html" xml:base="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-en/"><![CDATA[<p>On GKE, <strong>Workload Identity Federation for GKE</strong> allows a Pod to obtain Google Cloud credentials <strong>without keys</strong> and with permissions defined in IAM. The idea is straightforward: the Pod uses a <strong>Kubernetes ServiceAccount (KSA)</strong>, which maps to a <strong>Google Service Account (GSA)</strong>, and calls to Google APIs are authorized using the GSA’s roles.</p>
 
 <h2 id="how-workload-identity-works-on-gke">How Workload Identity works on GKE</h2>
 
@@ -135,7 +135,6 @@ One of the key pieces to do this is the <strong>network identity of the request<
 
 <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">bpf</span><span class="pi">:</span>
   <span class="na">masquerade</span><span class="pi">:</span> <span class="kc">false</span>
-  <span class="na">lbExternalClusterIP</span><span class="pi">:</span> <span class="kc">true</span>
 </code></pre></div></div>
 
 <p>After that, validate that:</p>
@@ -304,7 +303,6 @@ Una de las piezas clave para hacerlo es la <strong>identidad de red de la petici
 
 <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">bpf</span><span class="pi">:</span>
   <span class="na">masquerade</span><span class="pi">:</span> <span class="kc">false</span>
-  <span class="na">lbExternalClusterIP</span><span class="pi">:</span> <span class="kc">true</span>
 </code></pre></div></div>
 
 <p>Después, valida que:</p>

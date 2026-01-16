@@ -131,7 +131,6 @@ The operational recommendation is:
 ```yaml
 bpf:
   masquerade: false
-  lbExternalClusterIP: true
 ```
 
 After that, validate that:
