@@ -1,4 +1,342 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2026-01-12T17:32:44+01:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">K8sReady</title><subtitle>Infraestructura Cloud moderna, segura y eficiente</subtitle><entry xml:lang="es"><title type="html">Exponiendo URLs internas y externas en GKE sin mezclar responsabilidades</title><link href="http://localhost:4000/2026/01/12/exponiendo-urls-internas-y-externas-en-gke-es/" rel="alternate" type="text/html" title="Exponiendo URLs internas y externas en GKE sin mezclar responsabilidades" /><published>2026-01-12T00:00:00+01:00</published><updated>2026-01-12T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/12/exponiendo-urls-internas-y-externas-en-gke-es</id><content type="html" xml:base="http://localhost:4000/2026/01/12/exponiendo-urls-internas-y-externas-en-gke-es/"><![CDATA[<p>Cuando diseñas una arquitectura en <strong>GCP con Kubernetes</strong>, una de las decisiones más importantes es <strong>cómo exponer tus URLs internas y externas sin mezclar responsabilidades ni comprometer seguridad</strong>.</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2026-01-16T18:09:36+01:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">K8sReady</title><subtitle>Infraestructura Cloud moderna, segura y eficiente</subtitle><entry xml:lang="en"><title type="html">Cilium BPF masquerade can break Workload Identity on GKE</title><link href="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-en/" rel="alternate" type="text/html" title="Cilium BPF masquerade can break Workload Identity on GKE" /><published>2026-01-16T00:00:00+01:00</published><updated>2026-01-16T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-en</id><content type="html" xml:base="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-en/"><![CDATA[<p>On GKE, <strong>Workload Identity Federation for GKE</strong> allows a Pod to obtain Google Cloud credentials <strong>without keys</strong> and with permissions defined in IAM. The idea is straightforward: the Pod uses a <strong>Kubernetes ServiceAccount (KSA)</strong>, which maps to a <strong>Google Service Account (GSA)</strong>, and calls to Google APIs are authorized using the GSA’s roles.</p>
+
+<h2 id="how-workload-identity-works-on-gke">How Workload Identity works on GKE</h2>
+
+<p>Imagine a Pod that needs to <strong>access Cloud Storage</strong> to read or write objects in a bucket.</p>
+
+<p>Instead of using JSON keys, on GKE with Workload Identity you do the following:</p>
+
+<ol>
+  <li>You create a <strong>Google Service Account (GSA)</strong> with permissions on Cloud Storage (for example <code class="language-plaintext highlighter-rouge">roles/storage.objectViewer</code>).</li>
+  <li>You associate that GSA with a <strong>Kubernetes Service Account (KSA)</strong>.</li>
+  <li>You configure the Pod to use that KSA.</li>
+</ol>
+
+<p>From that moment on, that Pod <strong>has the permissions of the GSA</strong>, just as if it were that Google service account.</p>
+
+<h3 id="what-happens-inside-the-pod">What happens inside the Pod?</h3>
+
+<p>The Pod’s application (for example, using the official Google Cloud SDK) uses <strong>Application Default Credentials (ADC)</strong> without knowing anything about Kubernetes or IAM.</p>
+
+<p>When the application tries to access Cloud Storage:</p>
+
+<ol>
+  <li>The SDK tries to get credentials by calling the <strong>metadata server</strong> (as it would on a Compute Engine VM).</li>
+  <li>On GKE, that call is handled by the <strong>GKE metadata server</strong>, which knows which Pod is making the request.</li>
+  <li>The metadata server identifies the <strong>Kubernetes Service Account (KSA)</strong> of the Pod.</li>
+  <li>From the KSA, it applies the mapping to the <strong>Google Service Account (GSA)</strong> configured.</li>
+  <li>It returns to the Pod a <strong>Google Cloud token</strong> with the permissions of the GSA.</li>
+</ol>
+
+<p>From the perspective of the Pod and the application:</p>
+
+<ul>
+  <li>No keys</li>
+  <li>No special configuration in the code</li>
+  <li>It simply “has permissions” to access Cloud Storage</li>
+</ul>
+
+<p>The Pod believes it’s running with valid Google Cloud credentials, when in reality GKE is doing all the <strong>KSA → GSA</strong> translation transparently.</p>
+
+<h2 id="typical-workload-identity-setup-ksa--gsa-on-gke">Typical Workload Identity setup (KSA ↔ GSA) on GKE</h2>
+
+<p>At a high level, the configuration flow is:</p>
+
+<ol>
+  <li>Create a <strong>Google Service Account (GSA)</strong> in IAM.</li>
+  <li>Assign it the necessary roles (for example, <code class="language-plaintext highlighter-rouge">roles/dns.admin</code> if you’re going to manipulate Cloud DNS).</li>
+  <li>Allow the <strong>Kubernetes ServiceAccount (KSA)</strong> to impersonate the GSA by granting <code class="language-plaintext highlighter-rouge">roles/iam.workloadIdentityUser</code> to the KSA principal on the GSA.</li>
+  <li>Annotate the <strong>KSA</strong> with the GSA email (<code class="language-plaintext highlighter-rouge">iam.gke.io/gcp-service-account</code>).</li>
+  <li>Configure Pods to use that KSA (<code class="language-plaintext highlighter-rouge">serviceAccountName</code>).</li>
+</ol>
+
+<h3 id="verifying-the-pods-identity">Verifying the Pod’s identity</h3>
+
+<p>A simple way to check what identity a Pod is resolving is to query the metadata server:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-s</span> <span class="nt">-H</span> <span class="s2">"Metadata-Flavor: Google"</span> <span class="se">\</span>
+  <span class="s2">"http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email"</span>
+<span class="nb">echo</span>
+</code></pre></div></div>
+
+<p>Expected output examples:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Workload Identity working correctly (GSA associated with the Pod)
+certmanager-igeo-operations@igeooperations.iam.gserviceaccount.com
+</code></pre></div></div>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Workload Identity broken (node identity)
+gke-node-sa-igeo-operations@igeooperations.iam.gserviceaccount.com
+</code></pre></div></div>
+
+<p>If you see the GSA associated with the Pod, Workload Identity is working.
+If you see the node’s service account, something is interfering with the process.</p>
+
+<p>For a more complete check, you can also directly request a token:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-s</span> <span class="nt">-H</span> <span class="s2">"Metadata-Flavor: Google"</span> <span class="se">\</span>
+  <span class="s2">"http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"</span>
+</code></pre></div></div>
+
+<h2 id="the-problem-cilium-with-bpf-masquerade">The problem: Cilium with BPF masquerade</h2>
+
+<p>For Workload Identity to work correctly, the GKE metadata server needs to <strong>attribute each request to the correct Pod</strong>.
+One of the key pieces to do this is the <strong>network identity of the request</strong>, typically the Pod’s source IP.</p>
+
+<p>This is where Cilium comes in.</p>
+
+<p>Cilium implements masquerading/NAT for outbound traffic: in practice, <strong>it can hide the Pod’s IP behind the node’s IP</strong> when traffic leaves the cluster.</p>
+
+<p>In Helm values, this is typically configured like:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">bpf</span><span class="pi">:</span>
+  <span class="na">masquerade</span><span class="pi">:</span> <span class="kc">true</span>
+</code></pre></div></div>
+
+<p>In certain scenarios on GKE, with <code class="language-plaintext highlighter-rouge">bpf.masquerade: true</code>, the Pod’s request to the metadata server can be <strong>SNATeated</strong>. When this happens, the metadata server sees the request as if it came from the <strong>node</strong>, not the <strong>Pod</strong>.</p>
+
+<p>The result is as follows:</p>
+
+<ul>
+  <li>The metadata server can no longer associate the request with the KSA.</li>
+  <li>The KSA → GSA mapping is not applied.</li>
+  <li>The response falls back to the <strong>node service account</strong>.</li>
+</ul>
+
+<p>The symptom is very clear:</p>
+
+<ul>
+  <li>
+    <p><strong>Before (without masquerade):</strong></p>
+
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">.../default/email</code> returns the <strong>Pod’s GSA</strong>.</li>
+    </ul>
+  </li>
+  <li>
+    <p><strong>With BPF masquerade enabled:</strong></p>
+
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">.../default/email</code> returns the <strong>node service account</strong>.</li>
+      <li>The Pod inherits the permissions (or lack thereof) of the node, not the expected ones.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>This type of breakage is documented in Cilium issues on GKE related to metadata and Workload Identity when using the BPF datapath.</p>
+
+<h2 id="practical-recommendation-on-gke-with-cloud-nat-avoid-bpf-masquerade">Practical recommendation: on GKE with Cloud NAT, avoid BPF masquerade</h2>
+
+<p>If your nodes are private and you have <strong>Cloud NAT for egress</strong>, you normally <strong>don’t need</strong> <code class="language-plaintext highlighter-rouge">bpf.masquerade</code> to have Internet connectivity: egress will still exit with the Cloud NAT’s public IPs anyway.</p>
+
+<p>In that context, <code class="language-plaintext highlighter-rouge">bpf.masquerade</code> usually adds little value and, as you’ve seen, can introduce hard-to-diagnose side effects.</p>
+
+<p>The operational recommendation is:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">bpf</span><span class="pi">:</span>
+  <span class="na">masquerade</span><span class="pi">:</span> <span class="kc">false</span>
+  <span class="na">lbExternalClusterIP</span><span class="pi">:</span> <span class="kc">true</span>
+</code></pre></div></div>
+
+<p>After that, validate that:</p>
+
+<ul>
+  <li>Egress (outbound to the Internet / external APIs) works correctly.</li>
+  <li>Workload Identity resolves the correct GSA again.</li>
+</ul>
+
+<h2 id="if-you-need-snat-for-specific-reasons">If you need SNAT for specific reasons</h2>
+
+<p>If at some point you need masquerade for a specific case (complex return routes, egress gateway, etc.), the correct approach is to <strong>masquerade normal traffic but exclude metadata/link-local</strong>, since Workload Identity depends on those calls.</p>
+
+<p>Common alternatives:</p>
+
+<ul>
+  <li>Use <code class="language-plaintext highlighter-rouge">ip-masq-agent</code> with <code class="language-plaintext highlighter-rouge">masqLinkLocal: false</code> and explicit exclusion of <code class="language-plaintext highlighter-rouge">169.254.0.0/16</code>.</li>
+  <li>Adjust your Cilium configuration or version to avoid SNAT toward the metadata server.</li>
+</ul>
+
+<h2 id="summary">Summary</h2>
+
+<ul>
+  <li>Workload Identity on GKE relies on the <strong>GKE metadata server</strong> to deliver credentials of the <strong>GSA</strong> associated with the <strong>KSA</strong>.</li>
+  <li>The metadata server needs to be able to attribute the request to the correct Pod.</li>
+  <li>With Cilium and <code class="language-plaintext highlighter-rouge">bpf.masquerade: true</code>, traffic toward metadata can be SNATeated and “appear” to come from the node.</li>
+  <li>In that case, Workload Identity breaks and the Pod starts using the node’s service account.</li>
+  <li>If you have Cloud NAT, leaving <code class="language-plaintext highlighter-rouge">masquerade: false</code> is usually safer and sufficient for egress.</li>
+</ul>
+
+<p>If you’re operating Cilium on GKE and see strange behavior with Workload Identity, first review your masquerade configuration.
+And if you want to discuss these design trade-offs, <a href="/en/contact">feel free to get in touch</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Cilium with BPF masquerade can interfere with Workload Identity on GKE, causing Pods to use the node service account instead of the expected one.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/cilium-cab-break-wi.png" /><media:content medium="image" url="http://localhost:4000/assets/img/cilium-cab-break-wi.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="es"><title type="html">Cilium BPF masquerade puede romper Workload Identity en GKE</title><link href="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-es/" rel="alternate" type="text/html" title="Cilium BPF masquerade puede romper Workload Identity en GKE" /><published>2026-01-16T00:00:00+01:00</published><updated>2026-01-16T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-es</id><content type="html" xml:base="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-es/"><![CDATA[<p>En GKE, <strong>Workload Identity Federation for GKE</strong> permite que un Pod obtenga credenciales de Google Cloud <strong>sin claves</strong> y con permisos definidos en IAM. La idea es simple: el Pod usa un <strong>Kubernetes ServiceAccount (KSA)</strong>, que se mapea a un <strong>Google Service Account (GSA)</strong>, y las llamadas a APIs de Google se autorizan con los roles del GSA.</p>
+
+<h2 id="cómo-funciona-workload-identity-en-gke">Cómo funciona Workload Identity en GKE</h2>
+
+<p>Imagina un Pod que necesita <strong>acceder a Cloud Storage</strong> para leer o escribir objetos en un bucket.</p>
+
+<p>En lugar de usar claves JSON, en GKE con Workload Identity haces lo siguiente:</p>
+
+<ol>
+  <li>Creas un <strong>Google Service Account (GSA)</strong> con permisos sobre Cloud Storage (por ejemplo <code class="language-plaintext highlighter-rouge">roles/storage.objectViewer</code>).</li>
+  <li>Asocias ese GSA a un <strong>Kubernetes Service Account (KSA)</strong>.</li>
+  <li>Configuras el Pod para usar ese KSA.</li>
+</ol>
+
+<p>Desde ese momento, ese Pod <strong>pasa a tener los permisos del GSA</strong>, igual que si fuera ese service account de Google.</p>
+
+<h3 id="qué-ocurre-dentro-del-pod">¿Qué ocurre dentro del Pod?</h3>
+
+<p>La aplicación del Pod (por ejemplo, usando el SDK oficial de Google Cloud) utiliza <strong>Application Default Credentials (ADC)</strong> sin saber nada de Kubernetes ni de IAM.</p>
+
+<p>Cuando la aplicación intenta acceder a Cloud Storage:</p>
+
+<ol>
+  <li>El SDK intenta obtener credenciales llamando al <strong>metadata server</strong> (como haría en una VM de Compute Engine).</li>
+  <li>En GKE, esa llamada es atendida por el <strong>GKE metadata server</strong>, que sabe qué Pod está haciendo la petición.</li>
+  <li>El metadata server identifica el <strong>Kubernetes Service Account (KSA)</strong> del Pod.</li>
+  <li>A partir del KSA, aplica el mapeo hacia el <strong>Google Service Account (GSA)</strong> configurado.</li>
+  <li>Devuelve al Pod un <strong>token de Google Cloud</strong> con los permisos del GSA.</li>
+</ol>
+
+<p>Desde el punto de vista del Pod y de la aplicación:</p>
+
+<ul>
+  <li>No hay claves</li>
+  <li>No hay configuración especial en el código</li>
+  <li>Simplemente “tiene permisos” para acceder a Cloud Storage</li>
+</ul>
+
+<p>El Pod cree que está corriendo con credenciales válidas de Google Cloud, cuando en realidad GKE está haciendo toda la traducción <strong>KSA → GSA</strong> de forma transparente.</p>
+
+<h2 id="configuración-típica-ksa--gsa-en-gke">Configuración típica (KSA ↔ GSA) en GKE</h2>
+
+<p>A alto nivel, el flujo de configuración es:</p>
+
+<ol>
+  <li>Crear un <strong>Google Service Account (GSA)</strong> en IAM.</li>
+  <li>Asignarle los roles necesarios (por ejemplo, <code class="language-plaintext highlighter-rouge">roles/dns.admin</code> si vas a manipular Cloud DNS).</li>
+  <li>Permitir que el <strong>Kubernetes ServiceAccount (KSA)</strong> pueda impersonar al GSA, otorgando <code class="language-plaintext highlighter-rouge">roles/iam.workloadIdentityUser</code> al principal del KSA sobre el GSA.</li>
+  <li>Anotar el <strong>KSA</strong> con el email del GSA (<code class="language-plaintext highlighter-rouge">iam.gke.io/gcp-service-account</code>).</li>
+  <li>Configurar los Pods para usar ese KSA (<code class="language-plaintext highlighter-rouge">serviceAccountName</code>).</li>
+</ol>
+
+<h2 id="verificación-de-la-identidad-del-pod">Verificación de la identidad del Pod</h2>
+
+<p>Una forma sencilla de comprobar qué identidad está resolviendo un Pod es consultar el metadata server:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-s</span> <span class="nt">-H</span> <span class="s2">"Metadata-Flavor: Google"</span> <span class="se">\</span>
+  <span class="s2">"http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email"</span>
+<span class="nb">echo</span>
+</code></pre></div></div>
+
+<p>Ejemplos de salida esperada:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Workload Identity funcionando correctamente (GSA asociado al Pod)
+certmanager-igeo-operations@igeooperations.iam.gserviceaccount.com
+</code></pre></div></div>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Workload Identity roto (identidad del nodo)
+gke-node-sa-igeo-operations@igeooperations.iam.gserviceaccount.com
+</code></pre></div></div>
+
+<p>Si ves el GSA asociado al Pod, Workload Identity está funcionando.
+Si ves el service account del nodo, algo está interfiriendo en el proceso.</p>
+
+<p>Para una comprobación más completa, también puedes pedir directamente un token:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-s</span> <span class="nt">-H</span> <span class="s2">"Metadata-Flavor: Google"</span> <span class="se">\</span>
+  <span class="s2">"http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"</span>
+</code></pre></div></div>
+
+<h2 id="el-problema-cilium-con-bpf-masquerade">El problema: Cilium con BPF masquerade</h2>
+
+<p>Para que Workload Identity funcione correctamente, el metadata server de GKE necesita <strong>atribuir cada petición al Pod correcto</strong>.
+Una de las piezas clave para hacerlo es la <strong>identidad de red de la petición</strong>, típicamente la IP origen del Pod.</p>
+
+<p>Aquí es donde entra Cilium.</p>
+
+<p>Cilium implementa masquerading/NAT para tráfico saliente: en la práctica, <strong>puede ocultar la IP del Pod detrás de la IP del nodo</strong> cuando el tráfico sale del cluster.</p>
+
+<p>En Helm values, esto suele configurarse así:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">bpf</span><span class="pi">:</span>
+  <span class="na">masquerade</span><span class="pi">:</span> <span class="kc">true</span>
+</code></pre></div></div>
+
+<p>En ciertos escenarios en GKE, con <code class="language-plaintext highlighter-rouge">bpf.masquerade: true</code>, la petición del Pod al metadata server puede salir <strong>SNATeada</strong>. Cuando esto ocurre, el metadata server ve la petición como si viniera del <strong>nodo</strong>, no del <strong>Pod</strong>.</p>
+
+<p>El resultado es el siguiente:</p>
+
+<ul>
+  <li>El metadata server ya no puede asociar la petición al KSA.</li>
+  <li>No se aplica el mapeo KSA → GSA.</li>
+  <li>La respuesta cae al <strong>service account del nodo</strong>.</li>
+</ul>
+
+<p>El síntoma es muy claro:</p>
+
+<ul>
+  <li>
+    <p><strong>Antes (sin masquerade):</strong></p>
+
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">.../default/email</code> devuelve el <strong>GSA del Pod</strong>.</li>
+    </ul>
+  </li>
+  <li>
+    <p><strong>Con BPF masquerade activado:</strong></p>
+
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">.../default/email</code> devuelve el <strong>service account del nodo</strong>.</li>
+      <li>El Pod hereda los permisos (o la falta de permisos) del nodo, no los esperados.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Este tipo de rotura está documentada en issues de Cilium en GKE relacionados con metadata y Workload Identity cuando se usa el datapath BPF.</p>
+
+<h2 id="recomendación-práctica-en-gke-con-cloud-nat-evitar-bpf-masquerade">Recomendación práctica: en GKE con Cloud NAT, evitar BPF masquerade</h2>
+
+<p>Si tus nodos son privados y tienes <strong>Cloud NAT para salida</strong>, normalmente <strong>no necesitas</strong> <code class="language-plaintext highlighter-rouge">bpf.masquerade</code> para tener conectividad a Internet: el egress acabará saliendo con las IP públicas del NAT igualmente.</p>
+
+<p>En ese contexto, <code class="language-plaintext highlighter-rouge">bpf.masquerade</code> suele aportar poco valor y, como has visto, puede introducir efectos secundarios difíciles de diagnosticar.</p>
+
+<p>La recomendación operativa es:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">bpf</span><span class="pi">:</span>
+  <span class="na">masquerade</span><span class="pi">:</span> <span class="kc">false</span>
+  <span class="na">lbExternalClusterIP</span><span class="pi">:</span> <span class="kc">true</span>
+</code></pre></div></div>
+
+<p>Después, valida que:</p>
+
+<ul>
+  <li>El egress (salida a Internet / APIs externas) funciona correctamente.</li>
+  <li>Workload Identity vuelve a resolver el GSA correcto.</li>
+</ul>
+
+<h2 id="si-necesitas-snat-por-razones-específicas">Si necesitas SNAT por razones específicas</h2>
+
+<p>Si en algún momento necesitas masquerade para un caso concreto (rutas de retorno complejas, egress gateway, etc.), la aproximación correcta es <strong>masqueradear el tráfico normal pero excluir metadata/link-local</strong>, ya que Workload Identity depende de esas llamadas.</p>
+
+<p>Alternativas habituales:</p>
+
+<ul>
+  <li>Usar <code class="language-plaintext highlighter-rouge">ip-masq-agent</code> con <code class="language-plaintext highlighter-rouge">masqLinkLocal: false</code> y exclusión explícita de <code class="language-plaintext highlighter-rouge">169.254.0.0/16</code>.</li>
+  <li>Ajustar la configuración o versión de Cilium para evitar SNAT hacia el metadata server.</li>
+</ul>
+
+<h2 id="resumen">Resumen</h2>
+
+<ul>
+  <li>Workload Identity en GKE se apoya en el <strong>GKE metadata server</strong> para entregar credenciales del <strong>GSA</strong> asociado al <strong>KSA</strong>.</li>
+  <li>El metadata server necesita poder atribuir la petición al Pod correcto.</li>
+  <li>Con Cilium y <code class="language-plaintext highlighter-rouge">bpf.masquerade: true</code>, el tráfico hacia metadata puede salir SNATeado y “parecer” venir del nodo.</li>
+  <li>En ese caso, Workload Identity se rompe y el Pod pasa a usar el service account del nodo.</li>
+  <li>Si tienes Cloud NAT, dejar <code class="language-plaintext highlighter-rouge">masquerade: false</code> suele ser más seguro y suficiente para egress.</li>
+</ul>
+
+<p>Si estás operando Cilium en GKE y ves comportamientos extraños con Workload Identity, revisa primero tu configuración de masquerade.
+Y si quieres discutir estos trade-offs de diseño, <a href="/es/contacto">ponte en contacto</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Cilium con BPF masquerade puede interferir con Workload Identity en GKE, causando que los Pods usen el service account del nodo en lugar del esperado.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/cilium-cab-break-wi.png" /><media:content medium="image" url="http://localhost:4000/assets/img/cilium-cab-break-wi.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="es"><title type="html">Exponiendo URLs internas y externas en GKE sin mezclar responsabilidades</title><link href="http://localhost:4000/2026/01/12/exponiendo-urls-internas-y-externas-en-gke-es/" rel="alternate" type="text/html" title="Exponiendo URLs internas y externas en GKE sin mezclar responsabilidades" /><published>2026-01-12T00:00:00+01:00</published><updated>2026-01-12T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/12/exponiendo-urls-internas-y-externas-en-gke-es</id><content type="html" xml:base="http://localhost:4000/2026/01/12/exponiendo-urls-internas-y-externas-en-gke-es/"><![CDATA[<p>Cuando diseñas una arquitectura en <strong>GCP con Kubernetes</strong>, una de las decisiones más importantes es <strong>cómo exponer tus URLs internas y externas sin mezclar responsabilidades ni comprometer seguridad</strong>.</p>
 
 <p>No es un problema de “qué funciona”, sino de <strong>qué modelo mental quieres imponer a tu plataforma</strong>.</p>
 

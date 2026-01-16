@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>K8sReady - Cilium BPF masquerade can break Workload Identity on GKE</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E☸%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      background-size: 200% 200%;
+      animation: gradientShift 15s ease infinite;
+      min-height: 100vh;
+      padding: 0;
+      margin: 0;
+      position: relative;
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+    }
+    
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    body::before {
+      content: '';
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: float 20s linear infinite;
+      pointer-events: none;
+    }
+    
+    body::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(240, 147, 251, 0.1) 0%, transparent 50%);
+      animation: pulse 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+    
+    @keyframes float {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-50px, -50px); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.05); }
+    }
+    
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      max-width: 100vw;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+      z-index: 1000;
+      padding: 20px 0;
+      overflow-x: hidden;
+    }
+    
+    .header-content {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    
+    .logo {
+      font-size: 1.5em;
+      font-weight: 700;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-decoration: none;
+      transition: transform 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .logo-icon {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 4px;
+      position: relative;
+      animation: rotate 3s linear infinite;
+    }
+    
+    .logo-icon::before {
+      content: '☸';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 14px;
+      color: white;
+    }
+    
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .logo:hover {
+      transform: scale(1.05);
+    }
+    
+    .logo:hover .logo-icon {
+      animation-duration: 1s;
+    }
+    
+    .nav {
+      display: flex;
+      gap: 35px;
+      list-style: none;
+      align-items: center;
+    }
+    
+    .nav-link {
+      color: #333;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95em;
+      position: relative;
+      transition: all 0.3s ease;
+      padding: 8px 0;
+      letter-spacing: 0.3px;
+    }
+    
+    .nav-link:hover {
+      color: #667eea;
+    }
+    
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      transition: width 0.3s ease;
+    }
+    
+    .nav-link:hover::after,
+    .nav-link.active::after {
+      width: 100%;
+    }
+    
+      .nav-link.active {
+        color: #667eea;
+      }
+      
+      .lang-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: 20px;
+        padding-left: 20px;
+        border-left: 1px solid rgba(0,0,0,0.1);
+      }
+      
+      .lang-link {
+        color: #666;
+        text-decoration: none;
+        font-size: 0.9em;
+        font-weight: 500;
+        transition: color 0.3s ease;
+        padding: 4px 8px;
+        border-radius: 4px;
+      }
+      
+      .lang-link:hover {
+        color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+      }
+      
+      .lang-link.active {
+        color: #667eea;
+        font-weight: 600;
+      }
+    
+    .main-content {
+      margin-top: 100px;
+      padding: 40px 20px;
+      min-height: calc(100vh - 100px);
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+      box-sizing: border-box;
+    }
+    
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 28px;
+      padding: 90px 70px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.2);
+      text-align: center;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      animation: fadeInUp 0.8s ease-out;
+      overflow: hidden;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .name-container {
+      position: relative;
+      margin-bottom: 30px;
+    }
+    
+    h1 {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 3.5em;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -1px;
+      line-height: 1.2;
+      animation: nameGlow 3s ease-in-out infinite;
+    }
+    
+    @keyframes nameGlow {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.1); }
+    }
+    
+    .subtitle {
+      color: #666;
+      font-size: 1.1em;
+      font-weight: 400;
+      margin-top: 20px;
+      letter-spacing: 0.5px;
+    }
+    
+    .divider {
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #667eea, transparent);
+      margin: 30px auto;
+      border-radius: 2px;
+    }
+    
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 40px;
+    }
+    
+    .social-link {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .social-link:hover {
+      transform: translateY(-5px) scale(1.1);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    }
+    
+    @media (max-width: 768px) {
+      .header-content {
+        padding: 0 20px;
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .nav {
+        gap: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      .nav-link {
+        font-size: 0.9em;
+      }
+      
+      .lang-selector {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        margin-top: 10px;
+        justify-content: center;
+      }
+      
+      .main-content {
+        margin-top: 120px;
+      }
+      
+      .container {
+        padding: 60px 40px;
+        border-radius: 24px;
+      }
+      
+      .logo {
+        font-size: 1.3em;
+      }
+      
+      .logo-icon {
+        width: 20px;
+        height: 20px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .header {
+        padding: 15px 0;
+      }
+      
+      .header-content {
+        padding: 0 15px;
+      }
+      
+      .nav {
+        gap: 15px;
+      }
+      
+      .nav-link {
+        font-size: 0.85em;
+        padding: 6px 0;
+      }
+      
+      .main-content {
+        margin-top: 110px;
+        padding: 20px 15px;
+      }
+      
+      .container {
+        padding: 50px 30px;
+        border-radius: 20px;
+      }
+    }
+  </style>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PPVYV3JC99"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-PPVYV3JC99');
+  </script>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      
+      
+        <a href="/en/" class="logo">
+      
+        <span class="logo-icon"></span>
+        <span>K8sReady</span>
+      </a>
+      <nav style="display: flex; align-items: center; gap: 20px;">
+        <ul class="nav">
+          
+          
+            
+            <li><a href="/en/" class="nav-link ">Home</a></li>
+            <li><a href="/en/information" class="nav-link ">Information</a></li>
+            <li><a href="/en/services" class="nav-link ">Services</a></li>
+            <li><a href="/en/blog" class="nav-link active">Blog</a></li>
+            <li><a href="/en/contact" class="nav-link ">Contact</a></li>
+          
+        </ul>
+        <div class="lang-selector">
+          <a href="/es/" class="lang-link ">🇪🇸 ES</a>
+          <span style="color: #ccc;">|</span>
+          <a href="/en/" class="lang-link ">🇬🇧 EN</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+  
+  <main class="main-content">
+    <div class="container">
+      <article class="blog-post">
+  <a href="/en/blog" class="back-link">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M19 12H5M12 19l-7-7 7-7"></path>
+    </svg>
+    Back to blog
+  </a>
+
+  <header class="post-header">
+    <h1 class="post-title">Cilium BPF masquerade can break Workload Identity on GKE</h1>
+    <div class="post-meta">
+      <time datetime="2026-01-16T00:00:00+01:00">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        
+          January 16, 2026
+        
+      </time>
+      <span class="reading-time">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        
+        
+        
+        
+          5 min read
+        
+      </span>
+    </div>
+  </header>
+
+  
+  <div class="post-image">
+    <img src="/assets/img/cilium-cab-break-wi.png" alt="Cilium BPF masquerade can break Workload Identity on GKE">
+  </div>
+  
+
+  <div class="post-content">
+    <p>On GKE, <strong>Workload Identity Federation for GKE</strong> allows a Pod to obtain Google Cloud credentials <strong>without keys</strong> and with permissions defined in IAM. The idea is straightforward: the Pod uses a <strong>Kubernetes ServiceAccount (KSA)</strong>, which maps to a <strong>Google Service Account (GSA)</strong>, and calls to Google APIs are authorized using the GSA’s roles.</p>
+
+<h2 id="how-workload-identity-works-on-gke">How Workload Identity works on GKE</h2>
+
+<p>Imagine a Pod that needs to <strong>access Cloud Storage</strong> to read or write objects in a bucket.</p>
+
+<p>Instead of using JSON keys, on GKE with Workload Identity you do the following:</p>
+
+<ol>
+  <li>You create a <strong>Google Service Account (GSA)</strong> with permissions on Cloud Storage (for example <code class="language-plaintext highlighter-rouge">roles/storage.objectViewer</code>).</li>
+  <li>You associate that GSA with a <strong>Kubernetes Service Account (KSA)</strong>.</li>
+  <li>You configure the Pod to use that KSA.</li>
+</ol>
+
+<p>From that moment on, that Pod <strong>has the permissions of the GSA</strong>, just as if it were that Google service account.</p>
+
+<h3 id="what-happens-inside-the-pod">What happens inside the Pod?</h3>
+
+<p>The Pod’s application (for example, using the official Google Cloud SDK) uses <strong>Application Default Credentials (ADC)</strong> without knowing anything about Kubernetes or IAM.</p>
+
+<p>When the application tries to access Cloud Storage:</p>
+
+<ol>
+  <li>The SDK tries to get credentials by calling the <strong>metadata server</strong> (as it would on a Compute Engine VM).</li>
+  <li>On GKE, that call is handled by the <strong>GKE metadata server</strong>, which knows which Pod is making the request.</li>
+  <li>The metadata server identifies the <strong>Kubernetes Service Account (KSA)</strong> of the Pod.</li>
+  <li>From the KSA, it applies the mapping to the <strong>Google Service Account (GSA)</strong> configured.</li>
+  <li>It returns to the Pod a <strong>Google Cloud token</strong> with the permissions of the GSA.</li>
+</ol>
+
+<p>From the perspective of the Pod and the application:</p>
+
+<ul>
+  <li>No keys</li>
+  <li>No special configuration in the code</li>
+  <li>It simply “has permissions” to access Cloud Storage</li>
+</ul>
+
+<p>The Pod believes it’s running with valid Google Cloud credentials, when in reality GKE is doing all the <strong>KSA → GSA</strong> translation transparently.</p>
+
+<h2 id="typical-workload-identity-setup-ksa--gsa-on-gke">Typical Workload Identity setup (KSA ↔ GSA) on GKE</h2>
+
+<p>At a high level, the configuration flow is:</p>
+
+<ol>
+  <li>Create a <strong>Google Service Account (GSA)</strong> in IAM.</li>
+  <li>Assign it the necessary roles (for example, <code class="language-plaintext highlighter-rouge">roles/dns.admin</code> if you’re going to manipulate Cloud DNS).</li>
+  <li>Allow the <strong>Kubernetes ServiceAccount (KSA)</strong> to impersonate the GSA by granting <code class="language-plaintext highlighter-rouge">roles/iam.workloadIdentityUser</code> to the KSA principal on the GSA.</li>
+  <li>Annotate the <strong>KSA</strong> with the GSA email (<code class="language-plaintext highlighter-rouge">iam.gke.io/gcp-service-account</code>).</li>
+  <li>Configure Pods to use that KSA (<code class="language-plaintext highlighter-rouge">serviceAccountName</code>).</li>
+</ol>
+
+<h3 id="verifying-the-pods-identity">Verifying the Pod’s identity</h3>
+
+<p>A simple way to check what identity a Pod is resolving is to query the metadata server:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-s</span> <span class="nt">-H</span> <span class="s2">"Metadata-Flavor: Google"</span> <span class="se">\</span>
+  <span class="s2">"http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email"</span>
+<span class="nb">echo</span>
+</code></pre></div></div>
+
+<p>Expected output examples:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Workload Identity working correctly (GSA associated with the Pod)
+certmanager-igeo-operations@igeooperations.iam.gserviceaccount.com
+</code></pre></div></div>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Workload Identity broken (node identity)
+gke-node-sa-igeo-operations@igeooperations.iam.gserviceaccount.com
+</code></pre></div></div>
+
+<p>If you see the GSA associated with the Pod, Workload Identity is working.
+If you see the node’s service account, something is interfering with the process.</p>
+
+<p>For a more complete check, you can also directly request a token:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-s</span> <span class="nt">-H</span> <span class="s2">"Metadata-Flavor: Google"</span> <span class="se">\</span>
+  <span class="s2">"http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"</span>
+</code></pre></div></div>
+
+<h2 id="the-problem-cilium-with-bpf-masquerade">The problem: Cilium with BPF masquerade</h2>
+
+<p>For Workload Identity to work correctly, the GKE metadata server needs to <strong>attribute each request to the correct Pod</strong>.
+One of the key pieces to do this is the <strong>network identity of the request</strong>, typically the Pod’s source IP.</p>
+
+<p>This is where Cilium comes in.</p>
+
+<p>Cilium implements masquerading/NAT for outbound traffic: in practice, <strong>it can hide the Pod’s IP behind the node’s IP</strong> when traffic leaves the cluster.</p>
+
+<p>In Helm values, this is typically configured like:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">bpf</span><span class="pi">:</span>
+  <span class="na">masquerade</span><span class="pi">:</span> <span class="kc">true</span>
+</code></pre></div></div>
+
+<p>In certain scenarios on GKE, with <code class="language-plaintext highlighter-rouge">bpf.masquerade: true</code>, the Pod’s request to the metadata server can be <strong>SNATeated</strong>. When this happens, the metadata server sees the request as if it came from the <strong>node</strong>, not the <strong>Pod</strong>.</p>
+
+<p>The result is as follows:</p>
+
+<ul>
+  <li>The metadata server can no longer associate the request with the KSA.</li>
+  <li>The KSA → GSA mapping is not applied.</li>
+  <li>The response falls back to the <strong>node service account</strong>.</li>
+</ul>
+
+<p>The symptom is very clear:</p>
+
+<ul>
+  <li>
+    <p><strong>Before (without masquerade):</strong></p>
+
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">.../default/email</code> returns the <strong>Pod’s GSA</strong>.</li>
+    </ul>
+  </li>
+  <li>
+    <p><strong>With BPF masquerade enabled:</strong></p>
+
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">.../default/email</code> returns the <strong>node service account</strong>.</li>
+      <li>The Pod inherits the permissions (or lack thereof) of the node, not the expected ones.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>This type of breakage is documented in Cilium issues on GKE related to metadata and Workload Identity when using the BPF datapath.</p>
+
+<h2 id="practical-recommendation-on-gke-with-cloud-nat-avoid-bpf-masquerade">Practical recommendation: on GKE with Cloud NAT, avoid BPF masquerade</h2>
+
+<p>If your nodes are private and you have <strong>Cloud NAT for egress</strong>, you normally <strong>don’t need</strong> <code class="language-plaintext highlighter-rouge">bpf.masquerade</code> to have Internet connectivity: egress will still exit with the Cloud NAT’s public IPs anyway.</p>
+
+<p>In that context, <code class="language-plaintext highlighter-rouge">bpf.masquerade</code> usually adds little value and, as you’ve seen, can introduce hard-to-diagnose side effects.</p>
+
+<p>The operational recommendation is:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">bpf</span><span class="pi">:</span>
+  <span class="na">masquerade</span><span class="pi">:</span> <span class="kc">false</span>
+  <span class="na">lbExternalClusterIP</span><span class="pi">:</span> <span class="kc">true</span>
+</code></pre></div></div>
+
+<p>After that, validate that:</p>
+
+<ul>
+  <li>Egress (outbound to the Internet / external APIs) works correctly.</li>
+  <li>Workload Identity resolves the correct GSA again.</li>
+</ul>
+
+<h2 id="if-you-need-snat-for-specific-reasons">If you need SNAT for specific reasons</h2>
+
+<p>If at some point you need masquerade for a specific case (complex return routes, egress gateway, etc.), the correct approach is to <strong>masquerade normal traffic but exclude metadata/link-local</strong>, since Workload Identity depends on those calls.</p>
+
+<p>Common alternatives:</p>
+
+<ul>
+  <li>Use <code class="language-plaintext highlighter-rouge">ip-masq-agent</code> with <code class="language-plaintext highlighter-rouge">masqLinkLocal: false</code> and explicit exclusion of <code class="language-plaintext highlighter-rouge">169.254.0.0/16</code>.</li>
+  <li>Adjust your Cilium configuration or version to avoid SNAT toward the metadata server.</li>
+</ul>
+
+<h2 id="summary">Summary</h2>
+
+<ul>
+  <li>Workload Identity on GKE relies on the <strong>GKE metadata server</strong> to deliver credentials of the <strong>GSA</strong> associated with the <strong>KSA</strong>.</li>
+  <li>The metadata server needs to be able to attribute the request to the correct Pod.</li>
+  <li>With Cilium and <code class="language-plaintext highlighter-rouge">bpf.masquerade: true</code>, traffic toward metadata can be SNATeated and “appear” to come from the node.</li>
+  <li>In that case, Workload Identity breaks and the Pod starts using the node’s service account.</li>
+  <li>If you have Cloud NAT, leaving <code class="language-plaintext highlighter-rouge">masquerade: false</code> is usually safer and sufficient for egress.</li>
+</ul>
+
+<p>If you’re operating Cilium on GKE and see strange behavior with Workload Identity, first review your masquerade configuration.
+And if you want to discuss these design trade-offs, <a href="/en/contact">feel free to get in touch</a>.</p>
+
+  </div>
+
+  <footer class="post-footer">
+    <a href="/en/blog" class="back-link-footer">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M19 12H5M12 19l-7-7 7-7"></path>
+      </svg>
+      View more articles
+    </a>
+  </footer>
+</article>
+
+<style>
+  .blog-post {
+    text-align: left;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95em;
+    margin-bottom: 30px;
+    transition: all 0.3s ease;
+  }
+
+  .back-link:hover {
+    color: #764ba2;
+    transform: translateX(-5px);
+  }
+
+  .post-header {
+    margin-bottom: 40px;
+    padding-bottom: 30px;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+  }
+
+  .post-title {
+    font-size: 2.5em !important;
+    font-weight: 700 !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 20px !important;
+    line-height: 1.3;
+  }
+
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    color: #888;
+    font-size: 0.95em;
+    flex-wrap: wrap;
+  }
+
+  .post-meta time,
+  .post-meta .reading-time {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .post-meta svg {
+    color: #667eea;
+  }
+
+  .post-image {
+    margin-bottom: 40px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+  }
+
+  .post-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .post-content {
+    font-size: 1.1em;
+    line-height: 1.9;
+    color: #444;
+  }
+
+  .post-content h2 {
+    font-size: 1.6em;
+    font-weight: 600;
+    color: #333;
+    margin-top: 50px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+  }
+
+  .post-content h3 {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: #444;
+    margin-top: 35px;
+    margin-bottom: 15px;
+  }
+
+  .post-content p {
+    margin-bottom: 20px;
+    text-align: justify;
+  }
+
+  .post-content ul,
+  .post-content ol {
+    margin: 25px 0;
+    padding-left: 25px;
+  }
+
+  .post-content li {
+    margin-bottom: 12px;
+    line-height: 1.7;
+  }
+
+  .post-content code {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+  }
+
+  .post-content pre {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    padding: 25px;
+    border-radius: 12px;
+    overflow-x: auto;
+    margin: 30px 0;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  }
+
+  .post-content pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+    font-size: 0.9em;
+  }
+
+  .post-content blockquote {
+    border-left: 4px solid #667eea;
+    margin: 30px 0;
+    padding: 20px 25px;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 0 12px 12px 0;
+    font-style: italic;
+    color: #555;
+  }
+
+  .post-content strong {
+    color: #333;
+    font-weight: 600;
+  }
+
+  .post-content a {
+    color: #667eea;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .post-content a:hover {
+    border-bottom-color: #667eea;
+  }
+
+  .post-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin: 30px 0;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  }
+
+  .post-footer {
+    margin-top: 60px;
+    padding-top: 30px;
+    border-top: 2px solid rgba(102, 126, 234, 0.1);
+    text-align: center;
+  }
+
+  .back-link-footer {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  }
+
+  .back-link-footer:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+  }
+
+  @media (max-width: 768px) {
+    .post-title {
+      font-size: 1.8em !important;
+    }
+
+    .post-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .post-content {
+      font-size: 1em;
+    }
+
+    .post-content h2 {
+      font-size: 1.4em;
+    }
+
+    .post-content pre {
+      padding: 15px;
+      font-size: 0.85em;
+    }
+  }
+</style>
+
+
+    </div>
+  </main>
+</body>
+</html>
+
