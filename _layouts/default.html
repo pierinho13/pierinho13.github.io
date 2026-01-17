@@ -415,14 +415,14 @@
             {% assign lang_prefix = '/es' %}
             <li><a href="/es/" class="nav-link {% if page.url == '/es/' or page.url == '/es/index.html' %}active{% endif %}">Inicio</a></li>
             <li><a href="/es/informacion" class="nav-link {% if page.url == '/es/informacion.html' or page.url == '/es/informacion/' %}active{% endif %}">Información</a></li>
-            <li><a href="/es/servicios" class="nav-link {% if page.url == '/es/servicios.html' or page.url == '/es/servicios/' %}active{% endif %}">Servicios</a></li>
+            <!-- <li><a href="/es/servicios" class="nav-link {% if page.url == '/es/servicios.html' or page.url == '/es/servicios/' %}active{% endif %}">Servicios</a></li> -->
             <li><a href="/es/blog" class="nav-link {% if page.url == '/es/blog.html' or page.url == '/es/blog/' or page.layout == 'post' and page.lang == 'es' %}active{% endif %}">Blog</a></li>
             <li><a href="/es/contacto" class="nav-link {% if page.url == '/es/contacto.html' or page.url == '/es/contacto/' %}active{% endif %}">Contacto</a></li>
           {% else %}
             {% assign lang_prefix = '/en' %}
             <li><a href="/en/" class="nav-link {% if page.url == '/en/' or page.url == '/en/index.html' %}active{% endif %}">Home</a></li>
             <li><a href="/en/information" class="nav-link {% if page.url == '/en/information.html' or page.url == '/en/information/' %}active{% endif %}">Information</a></li>
-            <li><a href="/en/services" class="nav-link {% if page.url == '/en/services.html' or page.url == '/en/services/' %}active{% endif %}">Services</a></li>
+            <!-- <li><a href="/en/services" class="nav-link {% if page.url == '/en/services.html' or page.url == '/en/services/' %}active{% endif %}">Services</a></li> -->
             <li><a href="/en/blog" class="nav-link {% if page.url == '/en/blog.html' or page.url == '/en/blog/' or page.layout == 'post' and page.lang == 'en' %}active{% endif %}">Blog</a></li>
             <li><a href="/en/contact" class="nav-link {% if page.url == '/en/contact.html' or page.url == '/en/contact/' %}active{% endif %}">Contact</a></li>
           {% endif %}
