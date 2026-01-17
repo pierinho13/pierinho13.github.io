@@ -77,4 +77,4 @@ But if your platform relies heavily on advanced Kubernetes networking, **GKE’s
 
 Sometimes, fewer surprises is the biggest feature.
 
-If you’re designing or evolving a Kubernetes platform and want to discuss these trade-offs, feel free to [get in touch](/en/contact).
+If you're interested in this kind of architecture, you can learn more about my experience or [get in touch](/en/contact).

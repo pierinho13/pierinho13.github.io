@@ -87,4 +87,4 @@ The decision is not “what works”, but:
 
 Designing this separation correctly from the beginning reduces complexity, lowers operational risk, and makes the architecture much easier to reason about over time.
 
-If you are designing or evolving a GKE platform and want to discuss these patterns, you can [contact me](/en/contact).
+If you're interested in this kind of architecture, you can learn more about my experience or [get in touch](/en/contact).

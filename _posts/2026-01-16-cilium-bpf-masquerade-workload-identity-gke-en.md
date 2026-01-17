@@ -156,4 +156,4 @@ Common alternatives:
 * If you have Cloud NAT, leaving `masquerade: false` is usually safer and sufficient for egress.
 
 If you're operating Cilium on GKE and see strange behavior with Workload Identity, first review your masquerade configuration.
-And if you want to discuss these design trade-offs, [feel free to get in touch](/en/contact).
+If you're interested in this kind of work, feel free to [get in touch](/en/contact).

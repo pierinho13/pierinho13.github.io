@@ -77,4 +77,4 @@ Pero si tu plataforma depende fuertemente de networking avanzado en Kubernetes, 
 
 A veces, menos sorpresas es la mejor característica.
 
-Si estás diseñando o evolucionando una plataforma Kubernetes y quieres comentar estos trade-offs, puedes [contactar conmigo](/es/contact).
+Si te interesa este tipo de arquitecturas, puedes ver más sobre mi experiencia o [contactarme](/es/contacto).

@@ -87,4 +87,4 @@ La decisión no es “qué funciona”, sino:
 
 Diseñar bien esta separación desde el principio ahorra complejidad, reduce riesgo operativo y hace que la arquitectura sea mucho más fácil de razonar a largo plazo.
 
-Si estás diseñando o evolucionando una plataforma en GKE y quieres comentar estos patrones, puedes [contactar conmigo](/es/contact).
+Si te interesa este tipo de arquitecturas, puedes ver más sobre mi experiencia o [contactarme](/es/contacto).
