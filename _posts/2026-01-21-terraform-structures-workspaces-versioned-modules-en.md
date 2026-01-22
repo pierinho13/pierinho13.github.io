@@ -13,40 +13,37 @@ A typical example of this approach would be:
 
 ```
 terraform-infra/
-  modules/
-    vpc/
-      main.tf
-      variables.tf
-      outputs.tf
-    eks/
-      main.tf
-      variables.tf
-      outputs.tf
-    rds/
-      main.tf
-      variables.tf
-      outputs.tf
-
-  prod/
-    backend.tf
-    providers.tf
-    main.tf
-    variables.tf
-    terraform.tfvars
-
-  preprod/
-    backend.tf
-    providers.tf
-    main.tf
-    variables.tf
-    terraform.tfvars
-
-  staging/
-    backend.tf
-    providers.tf
-    main.tf
-    variables.tf
-    terraform.tfvars
+├── modules/
+│   ├── vpc/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── eks/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   └── rds/
+│       ├── main.tf
+│       ├── variables.tf
+│       └── outputs.tf
+├── prod/
+│   ├── backend.tf
+│   ├── providers.tf
+│   ├── main.tf
+│   ├── variables.tf
+│   └── terraform.tfvars
+├── preprod/
+│   ├── backend.tf
+│   ├── providers.tf
+│   ├── main.tf
+│   ├── variables.tf
+│   └── terraform.tfvars
+└── staging/
+    ├── backend.tf
+    ├── providers.tf
+    ├── main.tf
+    ├── variables.tf
+    └── terraform.tfvars
 ```
 
 In this model, each environment references the local modules defined within the same repository, for example from `prod/main.tf`:
@@ -122,13 +119,13 @@ Each module is developed, evolved, and versioned independently.
 
 ```
 infra-preprod/
-  backend.tf
-  providers.tf
-  versions.tf
-  main.tf
-  variables.tf
-  env/
-    preprod.tfvars
+├── backend.tf
+├── providers.tf
+├── versions.tf
+├── main.tf
+├── variables.tf
+└── env/
+    └── preprod.tfvars
 ```
 
 Example of module consumption in `infra-preprod/main.tf`:
@@ -148,13 +145,13 @@ module "eks" {
 
 ```
 infra-prod/
-  backend.tf
-  providers.tf
-  versions.tf
-  main.tf
-  variables.tf
-  env/
-    prod.tfvars
+├── backend.tf
+├── providers.tf
+├── versions.tf
+├── main.tf
+├── variables.tf
+└── env/
+    └── prod.tfvars
 ```
 
 Example of module consumption in `infra-prod/main.tf`:

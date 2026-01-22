@@ -13,40 +13,37 @@ Un ejemplo típico de este enfoque sería el siguiente:
 
 ```
 terraform-infra/
-  modules/
-    vpc/
-      main.tf
-      variables.tf
-      outputs.tf
-    eks/
-      main.tf
-      variables.tf
-      outputs.tf
-    rds/
-      main.tf
-      variables.tf
-      outputs.tf
-
-  prod/
-    backend.tf
-    providers.tf
-    main.tf
-    variables.tf
-    terraform.tfvars
-
-  preprod/
-    backend.tf
-    providers.tf
-    main.tf
-    variables.tf
-    terraform.tfvars
-
-  staging/
-    backend.tf
-    providers.tf
-    main.tf
-    variables.tf
-    terraform.tfvars
+├── modules/
+│   ├── vpc/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── eks/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   └── rds/
+│       ├── main.tf
+│       ├── variables.tf
+│       └── outputs.tf
+├── prod/
+│   ├── backend.tf
+│   ├── providers.tf
+│   ├── main.tf
+│   ├── variables.tf
+│   └── terraform.tfvars
+├── preprod/
+│   ├── backend.tf
+│   ├── providers.tf
+│   ├── main.tf
+│   ├── variables.tf
+│   └── terraform.tfvars
+└── staging/
+    ├── backend.tf
+    ├── providers.tf
+    ├── main.tf
+    ├── variables.tf
+    └── terraform.tfvars
 ```
 
 En este modelo, cada entorno referencia los módulos locales definidos dentro del mismo repositorio, por ejemplo desde `prod/main.tf`:
@@ -122,13 +119,13 @@ Cada módulo se desarrolla, evoluciona y versiona de forma independiente.
 
 ```
 infra-preprod/
-  backend.tf
-  providers.tf
-  versions.tf
-  main.tf
-  variables.tf
-  env/
-    preprod.tfvars
+├── backend.tf
+├── providers.tf
+├── versions.tf
+├── main.tf
+├── variables.tf
+└── env/
+    └── preprod.tfvars
 ```
 
 Ejemplo de consumo de módulos en `infra-preprod/main.tf`:
@@ -148,13 +145,13 @@ module "eks" {
 
 ```
 infra-prod/
-  backend.tf
-  providers.tf
-  versions.tf
-  main.tf
-  variables.tf
-  env/
-    prod.tfvars
+├── backend.tf
+├── providers.tf
+├── versions.tf
+├── main.tf
+├── variables.tf
+└── env/
+    └── prod.tfvars
 ```
 
 Ejemplo de consumo de módulos en `infra-prod/main.tf`:
