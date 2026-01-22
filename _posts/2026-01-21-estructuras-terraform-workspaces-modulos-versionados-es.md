@@ -176,6 +176,10 @@ De este modo:
 - Preproducción puede avanzar versiones antes que producción
 - Producción permanece estable hasta que se decide actualizar
 
+## Conclusión
+
+Los Terraform workspaces encajan muy bien cuando se usan junto con Terraform Cloud y controles claros desde la plataforma. Sin embargo, para organizaciones con múltiples entornos críticos, pipelines automatizadas y necesidades fuertes de aislamiento, un modelo basado en **repositorios por entorno**, combinado con **módulos reutilizables versionados**, suele ofrecer mayor claridad, control y seguridad operativa a largo plazo.
+
 ## Otros recursos interesantes de HashiCorp
 
 Para profundizar en los distintos enfoques de organización de código Terraform y entender mejor los trade-offs entre estructuras, repositorios y módulos, estos recursos oficiales de HashiCorp resultan especialmente útiles:
@@ -194,9 +198,5 @@ Documentación oficial donde HashiCorp describe explícitamente alternativas a l
 
 **[Terraform – Module Configuration](https://developer.hashicorp.com/terraform/language/modules/configuration)**  
 Documentación oficial sobre cómo consumir módulos desde registries o repositorios Git, incluyendo versionado mediante tags, ramas o hashes.
-
-## Conclusión
-
-Los Terraform workspaces encajan muy bien cuando se usan junto con Terraform Cloud y controles claros desde la plataforma. Sin embargo, para organizaciones con múltiples entornos críticos, pipelines automatizadas y necesidades fuertes de aislamiento, un modelo basado en **repositorios por entorno**, combinado con **módulos reutilizables versionados**, suele ofrecer mayor claridad, control y seguridad operativa a largo plazo.
 
 Si te interesa este tipo de arquitecturas, puedes ver más sobre mi experiencia o [contactarme](/es/contacto).
