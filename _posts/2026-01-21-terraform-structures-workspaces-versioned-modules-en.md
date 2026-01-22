@@ -184,8 +184,6 @@ Terraform workspaces fit very well when used alongside Terraform Cloud and clear
 
 To dive deeper into different approaches for organizing Terraform code and better understand the trade-offs between structures, repositories, and modules, these official HashiCorp resources are especially useful:
 
-**[Terraform Repository Best Practices](https://www.hashicorp.com/en/resources/terraform-repository-best-practices)**  
-A practical guide on how to standardize Terraform repositories, reduce duplication, and improve maintainability, without imposing a single valid structure.
 
 **[Terraform Mono-Repo vs Multi-Repo: The Great Debate](https://www.hashicorp.com/en/blog/terraform-mono-repo-vs-multi-repo-the-great-debate)**  
 An analysis of the advantages and disadvantages between monorepo and multi-repo approaches applied to Terraform, highlighting that the decision depends on organizational and operational context.
