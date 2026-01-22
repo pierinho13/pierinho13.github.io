@@ -179,6 +179,25 @@ De este modo:
 - Preproducción puede avanzar versiones antes que producción
 - Producción permanece estable hasta que se decide actualizar
 
+## Otros recursos interesantes de HashiCorp
+
+Para profundizar en los distintos enfoques de organización de código Terraform y entender mejor los trade-offs entre estructuras, repositorios y módulos, estos recursos oficiales de HashiCorp resultan especialmente útiles:
+
+**[Terraform Repository Best Practices](https://www.hashicorp.com/en/resources/terraform-repository-best-practices)**  
+Una guía práctica sobre cómo estandarizar repositorios Terraform, reducir duplicaciones y mejorar mantenibilidad, sin imponer una única estructura válida.
+
+**[Terraform Mono-Repo vs Multi-Repo: The Great Debate](https://www.hashicorp.com/en/blog/terraform-mono-repo-vs-multi-repo-the-great-debate)**  
+Análisis de ventajas y desventajas entre enfoques monorepo y multi-repo aplicados a Terraform, destacando que la decisión depende del contexto organizativo y operativo.
+
+**[Structuring Terraform Configuration for Production](https://www.hashicorp.com/en/blog/structuring-hashicorp-terraform-configuration-for-production)**  
+Recomendaciones para evolucionar configuraciones Terraform hacia entornos productivos, enfatizando la separación de responsabilidades y el uso de módulos reutilizables.
+
+**[Terraform CLI – Workspaces (Alternatives to Workspaces)](https://developer.hashicorp.com/terraform/cli/workspaces#alternatives-to-workspaces)**  
+Documentación oficial donde HashiCorp describe explícitamente alternativas a los workspaces basadas en configuraciones separadas que reutilizan módulos comunes con backends distintos.
+
+**[Terraform – Module Configuration](https://developer.hashicorp.com/terraform/language/modules/configuration)**  
+Documentación oficial sobre cómo consumir módulos desde registries o repositorios Git, incluyendo versionado mediante tags, ramas o hashes.
+
 ## Conclusión
 
 Los Terraform workspaces encajan muy bien cuando se usan junto con Terraform Cloud y controles claros desde la plataforma. Sin embargo, para organizaciones con múltiples entornos críticos, pipelines automatizadas y necesidades fuertes de aislamiento, un modelo basado en **repositorios por entorno**, combinado con **módulos reutilizables versionados**, suele ofrecer mayor claridad, control y seguridad operativa a largo plazo.

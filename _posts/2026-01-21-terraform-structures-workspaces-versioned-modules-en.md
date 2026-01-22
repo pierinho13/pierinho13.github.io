@@ -179,6 +179,25 @@ With this approach:
 - Preproduction can advance versions before production
 - Production remains stable until an update is decided
 
+## Other useful HashiCorp resources
+
+To dive deeper into different approaches for organizing Terraform code and better understand the trade-offs between structures, repositories, and modules, these official HashiCorp resources are especially useful:
+
+**[Terraform Repository Best Practices](https://www.hashicorp.com/en/resources/terraform-repository-best-practices)**  
+A practical guide on how to standardize Terraform repositories, reduce duplication, and improve maintainability, without imposing a single valid structure.
+
+**[Terraform Mono-Repo vs Multi-Repo: The Great Debate](https://www.hashicorp.com/en/blog/terraform-mono-repo-vs-multi-repo-the-great-debate)**  
+An analysis of the advantages and disadvantages between monorepo and multi-repo approaches applied to Terraform, highlighting that the decision depends on organizational and operational context.
+
+**[Structuring Terraform Configuration for Production](https://www.hashicorp.com/en/blog/structuring-hashicorp-terraform-configuration-for-production)**  
+Recommendations for evolving Terraform configurations toward production environments, emphasizing separation of responsibilities and the use of reusable modules.
+
+**[Terraform CLI – Workspaces (Alternatives to Workspaces)](https://developer.hashicorp.com/terraform/cli/workspaces#alternatives-to-workspaces)**  
+Official documentation where HashiCorp explicitly describes alternatives to workspaces based on separate configurations that reuse common modules with different backends.
+
+**[Terraform – Module Configuration](https://developer.hashicorp.com/terraform/language/modules/configuration)**  
+Official documentation on how to consume modules from registries or Git repositories, including versioning via tags, branches, or hashes.
+
 ## Conclusion
 
 Terraform workspaces fit very well when used alongside Terraform Cloud and clear controls from the platform. However, for organizations with multiple critical environments, automated pipelines, and strong isolation needs, a model based on **repositories per environment**, combined with **versioned reusable modules**, typically offers greater clarity, control, and long-term operational security.
