@@ -3,7 +3,7 @@ layout: post
 title: "Cuando Elastic APM funciona… pero no ves ningún error"
 date: 2026-01-29
 lang: es
-image: /assets/img/apm-elastic-errors.png
+image: /assets/img/apm-elastic.png
 excerpt: "Elastic APM parecía funcionar perfectamente, pero los errores no aparecían. El problema no estaba en el agente, sino en los templates de logs."
 ---
 
