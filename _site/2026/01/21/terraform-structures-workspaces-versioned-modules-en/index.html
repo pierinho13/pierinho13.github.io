@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>K8sReady - Cilium en EKS vs GKE: por qué el networking en Kubernetes se siente más simple en GKE</title>
+  <title>K8sReady - How to structure your Terraform projects? Workspaces vs per-environment repositories</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E☸%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -414,7 +414,7 @@
             <li><a href="/en/" class="nav-link ">Home</a></li>
             <li><a href="/en/information" class="nav-link ">Information</a></li>
             <!-- <li><a href="/en/services" class="nav-link ">Services</a></li> -->
-            <li><a href="/en/blog" class="nav-link ">Blog</a></li>
+            <li><a href="/en/blog" class="nav-link active">Blog</a></li>
             <li><a href="/en/contact" class="nav-link ">Contact</a></li>
           
         </ul>
@@ -430,17 +430,17 @@
   <main class="main-content">
     <div class="container">
       <article class="blog-post">
-  <a href="/es/blog" class="back-link">
+  <a href="/en/blog" class="back-link">
     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
       <path d="M19 12H5M12 19l-7-7 7-7"></path>
     </svg>
-    Volver al blog
+    Back to blog
   </a>
 
   <header class="post-header">
-    <h1 class="post-title">Cilium en EKS vs GKE: por qué el networking en Kubernetes se siente más simple en GKE</h1>
+    <h1 class="post-title">How to structure your Terraform projects? Workspaces vs per-environment repositories</h1>
     <div class="post-meta">
-      <time datetime="2026-01-08T00:00:00+01:00">
+      <time datetime="2026-01-21T00:00:00+01:00">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
           <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -448,7 +448,7 @@
           <line x1="3" y1="10" x2="21" y2="10"></line>
         </svg>
         
-          08 de January, 2026
+          January 21, 2026
         
       </time>
       <span class="reading-time">
@@ -460,7 +460,7 @@
         
         
         
-          2 min de lectura
+          5 min read
         
       </span>
     </div>
@@ -468,101 +468,208 @@
 
   
   <div class="post-image">
-    <img src="https://plus.unsplash.com/premium_photo-1744345196324-94c618a49bc3?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=800&q=80" alt="Cilium en EKS vs GKE: por qué el networking en Kubernetes se siente más simple en GKE">
+    <img src="/assets/img/non_recommended_structure_terraform.png" alt="How to structure your Terraform projects? Workspaces vs per-environment repositories">
   </div>
   
 
   <div class="post-content">
-    <p>Tras desplegar <strong>Cilium</strong> tanto en <strong>EKS</strong> como en <strong>GKE</strong>, hubo algo que se volvió muy evidente:</p>
+    <p>Many teams commonly use a Terraform structure based on a single repository, with folders per environment (prod, preprod, staging) and a common folder for reusable modules. Although this is not an official standard defined by Terraform, it is a widely adopted pattern in the community, especially in teams that are starting to scale their infrastructure as code.</p>
 
-<p><strong>El networking es mucho más fácil de razonar en GKE.</strong></p>
+<p>A typical example of this approach would be:</p>
 
-<p>No se trata de qué plataforma es “mejor”, sino de qué tan alineado está su modelo de red con la forma en la que Kubernetes fue diseñado originalmente.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>terraform-infra/
+├── modules/
+│   ├── vpc/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── eks/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   └── rds/
+│       ├── main.tf
+│       ├── variables.tf
+│       └── outputs.tf
+├── prod/
+│   ├── backend.tf
+│   ├── providers.tf
+│   ├── main.tf
+│   ├── variables.tf
+│   └── terraform.tfvars
+├── preprod/
+│   ├── backend.tf
+│   ├── providers.tf
+│   ├── main.tf
+│   ├── variables.tf
+│   └── terraform.tfvars
+└── staging/
+    ├── backend.tf
+    ├── providers.tf
+    ├── main.tf
+    ├── variables.tf
+    └── terraform.tfvars
+</code></pre></div></div>
 
-<h2 id="el-networking-de-kubernetes-como-fue-concebido-gke">El networking de Kubernetes como fue concebido (GKE)</h2>
+<p>In this model, each environment references the local modules defined within the same repository, for example from <code class="language-plaintext highlighter-rouge">prod/main.tf</code>:</p>
 
-<p>En GKE, el modelo de red de Kubernetes se siente natural y predecible. La mayoría de las cosas se comportan como esperas si entiendes los fundamentos de Kubernetes.</p>
+<div class="language-hcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">module</span> <span class="s2">"vpc"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"../modules/vpc"</span>
+  <span class="nx">name</span>   <span class="o">=</span> <span class="s2">"prod"</span>
+<span class="p">}</span>
 
-<p>Algunas características clave:</p>
+<span class="nx">module</span> <span class="s2">"eks"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"../modules/eks"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>This approach works well in small teams or early stages, and is often combined with <strong>Terraform workspaces</strong> to manage multiple states from the same codebase.</p>
+
+<h2 id="workspaces-context-and-limitations">Workspaces: context and limitations</h2>
+
+<p>Terraform, by design, is flexible regarding code organization and does not impose a specific structure. In this context, Terraform workspaces often appear as a natural solution for managing multiple environments from the same codebase, something that fits especially well with <strong>Terraform Cloud</strong>, where the workspace is explicitly selected from the interface and is clearly associated with a specific state, variables, and policies.</p>
+
+<p>However, outside of Terraform Cloud, using workspaces introduces certain operational risks. In local execution or generic pipelines, the active workspace depends on the command context (<code class="language-plaintext highlighter-rouge">terraform workspace select</code>). This makes human error more likely: an <code class="language-plaintext highlighter-rouge">apply</code> executed in the wrong workspace can impact the wrong environment if there are no additional controls.</p>
+
+<p>Terraform’s official documentation acknowledges this limitation and, in the <strong>Alternatives to Workspaces</strong> section, proposes a different strategy for more complex scenarios:</p>
+
+<blockquote>
+  <p>“Instead of creating CLI workspaces, you can use one or more re-usable modules to represent the common elements and then represent each instance as a separate configuration that instantiates those common elements in the context of a different backend.”</p>
+
+  <p>— <a href="https://developer.hashicorp.com/terraform/cli/workspaces#alternatives-to-workspaces">Terraform CLI – Workspaces</a></p>
+</blockquote>
+
+<p>This supports the idea that, when environments require clear isolation — for example, different backends, credentials, or domains of responsibility — using separate configurations that consume reusable modules can be more robust than relying solely on CLI workspaces.</p>
+
+<h2 id="one-repository-per-environment">One repository per environment</h2>
+
+<p>From this perspective, a common alternative in production environments is to use <strong>one repository per environment</strong>. In this model, each environment (production, preproduction, etc.) has its own repository, its own backend, its own state, and its own access controls, significantly reducing the risk of operational errors.</p>
+
+<p>Reusability is achieved through <strong>shared modules</strong>, ideally hosted in independent repositories, with explicit and controlled versioning. Terraform not only supports this approach but documents it clearly.</p>
+
+<p>In the official documentation on module configuration, Terraform explains how to install specific versions of a module, both from registries and Git repositories, allowing you to pin a version using tags, branches, or hashes:</p>
+
+<blockquote>
+  <p>“If you are using modules hosted in GitHub, BitBucket, or another Git repository, Terraform clones and uses the default branch referenced by HEAD. You can add the ref query parameter to the location specified in the source argument to reference any value supported by the git checkout command, such as a branch, SHA-1 hash, or tag.”</p>
+
+  <p>— <a href="https://developer.hashicorp.com/terraform/language/modules/configuration">Terraform – Module Configuration</a></p>
+</blockquote>
+
+<p>The documentation includes explicit examples using versioned tags and hashes to pin the exact module version:</p>
+
+<div class="language-hcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">module</span> <span class="s2">"vpc"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://example.com/vpc.git?ref=v1.2.0"</span>
+<span class="p">}</span>
+
+<span class="nx">module</span> <span class="s2">"storage"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://example.com/storage.git?ref=51d462976d84fdea54b47d80dcabbf680badcdb8"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>This approach allows different environments to consume the same module, but with different versions and variables, enabling controlled infrastructure evolution without breaking existing environments.</p>
+
+<h2 id="practical-example-repositories-per-environment-with-versioned-modules">Practical example: repositories per environment with versioned modules</h2>
+
+<p>A practical implementation of this approach is to separate environments into independent repositories and consume shared modules from external repositories, pinning specific versions.</p>
+
+<h3 id="module-repositories-shared">Module repositories (shared)</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tf-modules-vpc/        (tags: v1.2.0, v1.3.0, v2.0.0)
+tf-modules-eks/        (tags: v0.9.1, v1.0.0)
+tf-modules-rds/        (tags: v3.4.2)
+</code></pre></div></div>
+
+<p>Each module is developed, evolved, and versioned independently.</p>
+
+<h3 id="environment-repository-preproduction">Environment repository: preproduction</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>infra-preprod/
+├── backend.tf
+├── providers.tf
+├── versions.tf
+├── main.tf
+├── variables.tf
+└── env/
+    └── preprod.tfvars
+</code></pre></div></div>
+
+<p>Example of module consumption in <code class="language-plaintext highlighter-rouge">infra-preprod/main.tf</code>:</p>
+
+<div class="language-hcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">module</span> <span class="s2">"vpc"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://github.com/your-org/tf-modules-vpc.git?ref=v1.3.0"</span>
+  <span class="nx">name</span>   <span class="o">=</span> <span class="s2">"preprod"</span>
+<span class="p">}</span>
+
+<span class="nx">module</span> <span class="s2">"eks"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://github.com/your-org/tf-modules-eks.git?ref=v1.0.0"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="environment-repository-production">Environment repository: production</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>infra-prod/
+├── backend.tf
+├── providers.tf
+├── versions.tf
+├── main.tf
+├── variables.tf
+└── env/
+    └── prod.tfvars
+</code></pre></div></div>
+
+<p>Example of module consumption in <code class="language-plaintext highlighter-rouge">infra-prod/main.tf</code>:</p>
+
+<div class="language-hcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">module</span> <span class="s2">"vpc"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://github.com/your-org/tf-modules-vpc.git?ref=v1.2.0"</span>
+  <span class="nx">name</span>   <span class="o">=</span> <span class="s2">"prod"</span>
+<span class="p">}</span>
+
+<span class="nx">module</span> <span class="s2">"eks"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://github.com/your-org/tf-modules-eks.git?ref=v0.9.1"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="advantages-of-this-model">Advantages of this model</h3>
+
+<p>With this approach:</p>
 
 <ul>
-  <li>Los pods obtienen IPs desde <strong>rangos secundarios de la VPC</strong></li>
-  <li><strong>IPAM puede funcionar en modo <code class="language-plaintext highlighter-rouge">kubernetes</code></strong> sin fricción</li>
-  <li>Las IPs de los pods son <strong>ciudadanos de primera clase</strong> dentro de la VPC</li>
-  <li>La densidad de pods y el escalado son predecibles</li>
-  <li>Las funcionalidades avanzadas de Cilium funcionan con mínimos ajustes específicos de la plataforma</li>
+  <li>Both environments reuse the same modules</li>
+  <li>Each environment explicitly pins the module version it consumes</li>
+  <li>Preproduction can advance versions before production</li>
+  <li>Production remains stable until an update is decided</li>
 </ul>
 
-<p>Desde el punto de vista operativo, esto reduce mucho la carga mental. Piensas en términos de Kubernetes, no en limitaciones de infraestructura.</p>
+<h2 id="conclusion">Conclusion</h2>
 
-<h2 id="donde-eks-añade-fricción">Donde EKS añade fricción</h2>
+<p>Terraform workspaces fit very well when used alongside Terraform Cloud and clear controls from the platform. However, for organizations with multiple critical environments, automated pipelines, and strong isolation needs, a model based on <strong>repositories per environment</strong>, combined with <strong>versioned reusable modules</strong>, typically offers greater clarity, control, and long-term operational security.</p>
 
-<p>EKS es una plataforma sólida, pero su networking está más acoplado a primitivas de infraestructura propias de AWS.</p>
+<h2 id="other-useful-hashicorp-resources">Other useful HashiCorp resources</h2>
 
-<p>En la práctica, esto introduce varias restricciones adicionales:</p>
+<p>To dive deeper into different approaches for organizing Terraform code and better understand the trade-offs between structures, repositories, and modules, these official HashiCorp resources are especially useful:</p>
 
-<ul>
-  <li>Las IPs de los pods están ligadas a <strong>ENIs</strong></li>
-  <li>El agotamiento de IPs requiere <strong>muchísima más planificación previa</strong></li>
-  <li>La densidad de pods depende del tipo de instancia EC2</li>
-  <li>Algunas funcionalidades de Cilium requieren cambiar el <strong>tipo de target del Load Balancer</strong> (instance vs IP)</li>
-  <li>El modelo mental pasa a ser <strong>infraestructura-céntrico</strong>, no Kubernetes-céntrico</li>
-</ul>
+<p><strong><a href="https://www.hashicorp.com/en/blog/terraform-mono-repo-vs-multi-repo-the-great-debate">Terraform Mono-Repo vs Multi-Repo: The Great Debate</a></strong><br />
+An analysis of the advantages and disadvantages between monorepo and multi-repo approaches applied to Terraform, highlighting that the decision depends on organizational and operational context.</p>
 
-<p>Nada de esto convierte a EKS en una mala plataforma. Pero sí implica que operar configuraciones avanzadas de red requiere un mayor conocimiento de los detalles internos de AWS y más disciplina operativa.</p>
+<p><strong><a href="https://www.hashicorp.com/en/blog/structuring-hashicorp-terraform-configuration-for-production">Structuring Terraform Configuration for Production</a></strong><br />
+Recommendations for evolving Terraform configurations toward production environments, emphasizing separation of responsibilities and the use of reusable modules.</p>
 
-<h2 id="cilium-amplifica-las-diferencias">Cilium amplifica las diferencias</h2>
+<p><strong><a href="https://developer.hashicorp.com/terraform/cli/workspaces#alternatives-to-workspaces">Terraform CLI – Workspaces (Alternatives to Workspaces)</a></strong><br />
+Official documentation where HashiCorp explicitly describes alternatives to workspaces based on separate configurations that reuse common modules with different backends.</p>
 
-<p>Cilium no es el problema. De hecho, funciona muy bien en ambas plataformas.</p>
+<p><strong><a href="https://developer.hashicorp.com/terraform/language/modules/configuration">Terraform – Module Configuration</a></strong><br />
+Official documentation on how to consume modules from registries or Git repositories, including versioning via tags, branches, or hashes.</p>
 
-<p>Pero precisamente porque Cilium expone y se apoya en conceptos de networking nativos de Kubernetes, <strong>las diferencias entre plataformas se hacen más visibles</strong>:</p>
-
-<ul>
-  <li>En GKE, Cilium se siente como una extensión natural de la plataforma</li>
-  <li>En EKS, Cilium a menudo te obliga a revisar decisiones de red de bajo nivel</li>
-</ul>
-
-<p>Esto se nota especialmente cuando trabajas con:</p>
-<ul>
-  <li>Políticas FQDN</li>
-  <li>Control avanzado de egress</li>
-  <li>Integraciones con load balancers</li>
-  <li>Clústeres con alta densidad de pods</li>
-</ul>
-
-<h2 id="perspectiva-operativa">Perspectiva operativa</h2>
-
-<p>Desde el punto de vista de platform engineering, el soporte nativo de GKE para rangos secundarios elimina gran parte de la fricción operativa.</p>
-
-<p>Permite:</p>
-<ul>
-  <li>Escalar clústeres sin pensar constantemente en límites de IP</li>
-  <li>Aplicar políticas de red con menos sorpresas</li>
-  <li>Centrarse en abstracciones de Kubernetes en lugar de soluciones específicas del proveedor cloud</li>
-</ul>
-
-<p>En EKS, los mismos resultados son posibles, pero normalmente requieren <strong>más planificación, más restricciones y mayor disciplina operativa</strong>.</p>
-
-<h2 id="reflexión-final">Reflexión final</h2>
-
-<p>Esto no es un debate GKE vs EKS.</p>
-
-<p>Ambas plataformas están preparadas para producción y se usan ampliamente a gran escala.</p>
-
-<p>Pero si tu plataforma depende fuertemente de networking avanzado en Kubernetes, <strong>el modelo de red de GKE se siente más cercano a cómo Kubernetes quiere ser operado</strong>, y eso se traduce directamente en una menor carga cognitiva para los equipos de plataforma.</p>
-
-<p>A veces, menos sorpresas es la mejor característica.</p>
-
-<p>Si te interesa este tipo de arquitecturas, puedes ver más sobre mi experiencia o <a href="/es/contacto">contactarme</a>.</p>
+<p>If you’re interested in this kind of architecture, you can learn more about my experience or <a href="/en/contact">get in touch</a>.</p>
 
   </div>
 
   <footer class="post-footer">
-    <a href="/es/blog" class="back-link-footer">
+    <a href="/en/blog" class="back-link-footer">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path d="M19 12H5M12 19l-7-7 7-7"></path>
       </svg>
-      Ver más artículos
+      View more articles
     </a>
   </footer>
 </article>

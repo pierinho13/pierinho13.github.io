@@ -1,172 +1,810 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2026-01-16T18:17:36+01:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">K8sReady</title><subtitle>Infraestructura Cloud moderna, segura y eficiente</subtitle><entry xml:lang="en"><title type="html">Cilium BPF masquerade can break Workload Identity on GKE</title><link href="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-en/" rel="alternate" type="text/html" title="Cilium BPF masquerade can break Workload Identity on GKE" /><published>2026-01-16T00:00:00+01:00</published><updated>2026-01-16T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-en</id><content type="html" xml:base="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-en/"><![CDATA[<p>On GKE, <strong>Workload Identity Federation for GKE</strong> allows a Pod to obtain Google Cloud credentials <strong>without keys</strong> and with permissions defined in IAM. The idea is straightforward: the Pod uses a <strong>Kubernetes ServiceAccount (KSA)</strong>, which maps to a <strong>Google Service Account (GSA)</strong>, and calls to Google APIs are authorized using the GSA’s roles.</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2026-01-29T18:59:31+01:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">K8sReady</title><subtitle>Infraestructura Cloud moderna, segura y eficiente</subtitle><entry xml:lang="es"><title type="html">Cuando Elastic APM funciona… pero no ves ningún error</title><link href="http://localhost:4000/2026/01/29/apm-funciona-pero-no-ves-errores-es/" rel="alternate" type="text/html" title="Cuando Elastic APM funciona… pero no ves ningún error" /><published>2026-01-29T00:00:00+01:00</published><updated>2026-01-29T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/29/apm-funciona-pero-no-ves-errores-es</id><content type="html" xml:base="http://localhost:4000/2026/01/29/apm-funciona-pero-no-ves-errores-es/"><![CDATA[<p>Elastic APM estaba funcionando.
+Las transacciones aparecían.
+Las llamadas entre servicios se veían con bastante claridad.</p>
 
-<h2 id="how-workload-identity-works-on-gke">How Workload Identity works on GKE</h2>
+<p>Y aun así, había algo profundamente frustrante:
+los errores no aparecían.</p>
 
-<p>Imagine a Pod that needs to <strong>access Cloud Storage</strong> to read or write objects in a bucket.</p>
+<p>La aplicación tenía excepciones reales, visibles en los logs, pero en la UI de APM:</p>
 
-<p>Instead of using JSON keys, on GKE with Workload Identity you do the following:</p>
+<ul>
+  <li>No había errores.</li>
+  <li>No había stacktraces.</li>
+  <li>Las trazas parecían “limpias”.</li>
+</ul>
+
+<p>El problema no era evidente. Y tampoco estaba donde yo pensaba.</p>
+
+<h2 id="el-contexto">El contexto</h2>
+
+<p>Estaba integrando Elastic APM en una aplicación Java sobre Tomcat.</p>
+
+<p>La integración básica era correcta:</p>
+
+<ul>
+  <li>El agente APM arrancaba sin errores.</li>
+  <li>APM mostraba servicios y transacciones.</li>
+  <li>Las peticiones se trazaban correctamente.</li>
+</ul>
+
+<p>A nivel superficial, APM funcionaba.
+A nivel diagnóstico, no.</p>
+
+<h2 id="el-síntoma-real-trazas-sin-contexto-de-error">El síntoma real: trazas sin contexto de error</h2>
+
+<p>Las trazas mostraban:</p>
+
+<ul>
+  <li>Duraciones.</li>
+  <li>Llamadas.</li>
+  <li>El flujo general de la petición.</li>
+</ul>
+
+<p>Pero faltaba lo más importante cuando algo fallaba:</p>
+
+<ul>
+  <li>Ningún error asociado.</li>
+  <li>Ningún stacktrace.</li>
+  <li>Ninguna pista clara del motivo real del fallo.</li>
+</ul>
+
+<p>Esto es especialmente engañoso porque APM no estaba vacío.
+Estaba incompleto.</p>
+
+<p><img src="/assets/img/elastic-image-1.png" alt="Elastic APM sin errores" style="max-width: 600px; margin: 20px 0;" /></p>
+
+<h2 id="primer-impulso-añadir-más-instrumentación">Primer impulso: añadir más instrumentación</h2>
+
+<p>Mi primera reacción fue pensar que el problema era de detalle insuficiente en las trazas.</p>
+
+<p>Probé inicialmente a forzar instrumentación con:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ELASTIC_APM_TRACE_METHODS=com.pierinho13.*#*
+</code></pre></div></div>
+
+<p>El resultado fue inmediato, pero poco útil a largo plazo:</p>
+
+<ul>
+  <li>Muchísimo más detalle.</li>
+  <li>Demasiados métodos instrumentados.</li>
+  <li>Un volumen de spans difícil de manejar.</li>
+  <li>Ruido excesivo para un entorno real.</li>
+</ul>
+
+<p>APM dejaba de ser una herramienta de diagnóstico y pasaba a ser un volcán de datos.</p>
+
+<h2 id="un-mejor-equilibrio-inferred-spans-por-profiling">Un mejor equilibrio: inferred spans por profiling</h2>
+
+<p>Buscando una alternativa más razonable, activé inferred spans mediante profiling:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">ELASTIC_APM_PROFILING_INFERRED_SPANS_ENABLED</span>
+  <span class="na">value</span><span class="pi">:</span> <span class="s2">"</span><span class="s">true"</span>
+
+<span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">ELASTIC_APM_PROFILING_INFERRED_SPANS_MIN_DURATION</span>
+  <span class="na">value</span><span class="pi">:</span> <span class="s2">"</span><span class="s">10ms"</span>
+
+<span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">ELASTIC_APM_PROFILING_INFERRED_SPANS_SAMPLING_INTERVAL</span>
+  <span class="na">value</span><span class="pi">:</span> <span class="s2">"</span><span class="s">50ms"</span>
+</code></pre></div></div>
+
+<p>Aquí hubo un cambio claro:</p>
+
+<ul>
+  <li>Las trazas empezaron a mostrar mucho más detalle interno.</li>
+  <li>El recorrido real de la petición se entendía mejor.</li>
+  <li>Sin el coste ni la verbosidad de TRACE_METHODS.</li>
+</ul>
+
+<p>APM empezó a ser realmente útil.</p>
+
+<p>Pero los errores seguían sin aparecer.</p>
+
+<p><img src="/assets/img/elastic-image-2.png" alt="Inferred spans con profiling" style="max-width: 600px; margin: 20px 0;" /></p>
+
+<h2 id="el-error-de-enfoque">El error de enfoque</h2>
+
+<p>En ese punto estaba claro que:</p>
+
+<ul>
+  <li>El agente funcionaba.</li>
+  <li>La instrumentación funcionaba.</li>
+  <li>Las trazas se generaban correctamente.</li>
+</ul>
+
+<p>El problema no estaba en cómo se capturaban los datos, sino en qué pasaba con ellos después.</p>
+
+<h2 id="el-verdadero-causante-templates-e-ilm-pisando-apm">El verdadero causante: templates e ILM pisando APM</h2>
+
+<p>La causa real no estaba en APM, sino en la gestión de logs.</p>
+
+<p>Había un <strong>template genérico para <code class="language-plaintext highlighter-rouge">logs-*-*</code></strong> con una prioridad más alta que los templates específicos de APM.
+Eso hacía que, para data streams como <code class="language-plaintext highlighter-rouge">logs-apm.error-*</code>, ganara el template genérico en lugar del que Fleet y APM esperan.</p>
+
+<p>Además, las operaciones de ILM se aplicaban de forma indiscriminada a todos los data streams bajo <code class="language-plaintext highlighter-rouge">logs-*</code>, incluyendo los de APM, que tienen:</p>
+
+<ul>
+  <li>Pipelines específicos.</li>
+  <li>Mappings concretos.</li>
+  <li>Políticas de lifecycle propias.</li>
+</ul>
+
+<p>El efecto era <strong>silencioso pero devastador</strong>:</p>
+
+<ul>
+  <li>Las transacciones seguían apareciendo.</li>
+  <li>Las trazas seguían visibles.</li>
+  <li>Pero los errores y stacktraces quedaban degradados o directamente invisibles.</li>
+</ul>
+
+<h2 id="por-qué-apm-parecía-vacío-al-filtrar">Por qué APM parecía “vacío” al filtrar</h2>
+
+<p>La UI de APM depende críticamente de campos como:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">service.name</code></li>
+  <li><code class="language-plaintext highlighter-rouge">service.environment</code></li>
+</ul>
+
+<p>Cuando los templates de APM eran pisados:</p>
+
+<ul>
+  <li>Estos campos dejaban de comportarse como APM espera.</li>
+  <li>No eran agregables de la forma correcta.</li>
+  <li>Los filtros por servicio o entorno no devolvían resultados.</li>
+</ul>
+
+<p>Desde Kibana, la sensación era clara:</p>
+
+<blockquote>
+  <p>No hay errores.</p>
+</blockquote>
+
+<p>En realidad:</p>
+
+<blockquote>
+  <p>Los errores existían, pero APM no podía representarlos correctamente.</p>
+</blockquote>
+
+<h2 id="por-qué-este-problema-es-tan-difícil-de-detectar">Por qué este problema es tan difícil de detectar</h2>
+
+<p>Elastic no lanza alertas por esto.
+No hay errores evidentes.
+No hay mensajes claros en la UI.</p>
+
+<p>APM simplemente deja de mostrar parte de la información.</p>
+
+<p>Y eso es lo más peligroso:</p>
+
+<ul>
+  <li>Crees que el problema es el agente.</li>
+  <li>Ajustas instrumentación.</li>
+  <li>Cambias sampling.</li>
+  <li>Añades profiling.</li>
+</ul>
+
+<p>Cuando el problema real está en el ciclo de vida y los templates del dato.</p>
+
+<h2 id="el-aprendizaje-real">El aprendizaje real</h2>
+
+<p>Este caso dejó varias lecciones importantes:</p>
 
 <ol>
-  <li>You create a <strong>Google Service Account (GSA)</strong> with permissions on Cloud Storage (for example <code class="language-plaintext highlighter-rouge">roles/storage.objectViewer</code>).</li>
-  <li>You associate that GSA with a <strong>Kubernetes Service Account (KSA)</strong>.</li>
-  <li>You configure the Pod to use that KSA.</li>
+  <li><strong>APM puede funcionar de forma parcial</strong> y aun así parecer “correcto”.</li>
+  <li><strong>Ver transacciones no garantiza ver errores.</strong></li>
+  <li><strong>Añadir más instrumentación</strong> puede mejorar el detalle, pero no arregla problemas de ingestión o lifecycle.</li>
+  <li><strong>Los templates y políticas ILM de APM</strong> no son intercambiables con las de logs genéricos.</li>
 </ol>
 
-<p>From that moment on, that Pod <strong>has the permissions of the GSA</strong>, just as if it were that Google service account.</p>
+<p>Y la más importante:</p>
 
-<h3 id="what-happens-inside-the-pod">What happens inside the Pod?</h3>
+<blockquote>
+  <p>En observabilidad, no basta con que los datos lleguen.
+Tienen que llegar con la forma exacta que la herramienta espera.</p>
+</blockquote>
 
-<p>The Pod’s application (for example, using the official Google Cloud SDK) uses <strong>Application Default Credentials (ADC)</strong> without knowing anything about Kubernetes or IAM.</p>
+<p><img src="/assets/img/elastic-image-3.png" alt="Plantillas de Elasticsearch y ILM" style="max-width: 600px; margin: 20px 0;" /></p>
 
-<p>When the application tries to access Cloud Storage:</p>
+<h2 id="cierre">Cierre</h2>
+
+<p>Elastic APM estaba haciendo su trabajo desde el primer momento.
+Los errores también existían.</p>
+
+<p>El problema era menos visible y más peligroso:
+una configuración genérica de logs que degradaba silenciosamente APM.</p>
+
+<p>A veces el problema no es que no se generen, sino que se procesen de forma correcta.</p>
+
+<p>Si estás operando Elastic y encuentras problemas similares en APM o observabilidad, puedes <a href="/es/contacto">contactarme</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Elastic APM parecía funcionar perfectamente, pero los errores no aparecían. El problema no estaba en el agente, sino en los templates de logs.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/apm-elastic-errors.png" /><media:content medium="image" url="http://localhost:4000/assets/img/apm-elastic-errors.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">When Elastic APM works… but you see no errors</title><link href="http://localhost:4000/2026/01/29/apm-works-but-no-errors-en/" rel="alternate" type="text/html" title="When Elastic APM works… but you see no errors" /><published>2026-01-29T00:00:00+01:00</published><updated>2026-01-29T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/29/apm-works-but-no-errors-en</id><content type="html" xml:base="http://localhost:4000/2026/01/29/apm-works-but-no-errors-en/"><![CDATA[<p>Elastic APM was working.
+Transactions were appearing.
+Service calls were visible with reasonable clarity.</p>
+
+<p>And yet, there was something deeply frustrating:
+errors weren’t showing up.</p>
+
+<p>The application had real exceptions, visible in the logs, but in the APM UI:</p>
+
+<ul>
+  <li>No errors.</li>
+  <li>No stacktraces.</li>
+  <li>Traces looked “clean”.</li>
+</ul>
+
+<p>The problem wasn’t obvious. And it wasn’t where I thought it was.</p>
+
+<h2 id="the-context">The context</h2>
+
+<p>I was integrating Elastic APM into a Java application running on Tomcat.</p>
+
+<p>The basic integration was correct:</p>
+
+<ul>
+  <li>The APM agent started without errors.</li>
+  <li>APM showed services and transactions.</li>
+  <li>Requests were traced correctly.</li>
+</ul>
+
+<p>On the surface, APM worked.
+For diagnostics, it didn’t.</p>
+
+<h2 id="the-real-symptom-traces-without-error-context">The real symptom: traces without error context</h2>
+
+<p>Traces showed:</p>
+
+<ul>
+  <li>Durations.</li>
+  <li>Calls.</li>
+  <li>The overall flow of the request.</li>
+</ul>
+
+<p>But it was missing the most important thing when something failed:</p>
+
+<ul>
+  <li>No associated error.</li>
+  <li>No stacktrace.</li>
+  <li>No clear hint of the real reason for the failure.</li>
+</ul>
+
+<p>This is especially deceptive because APM wasn’t empty.
+It was incomplete.</p>
+
+<p><img src="/assets/img/elastic-image-1.png" alt="Elastic APM without errors" style="max-width: 600px; margin: 20px 0;" /></p>
+
+<h2 id="first-instinct-add-more-instrumentation">First instinct: add more instrumentation</h2>
+
+<p>My first reaction was to think the problem was insufficient detail in the traces.</p>
+
+<p>I initially tried to force instrumentation with:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ELASTIC_APM_TRACE_METHODS=com.pierinho13.*#*
+</code></pre></div></div>
+
+<p>The result was immediate, but not useful long-term:</p>
+
+<ul>
+  <li>Much more detail.</li>
+  <li>Too many methods instrumented.</li>
+  <li>A volume of spans hard to manage.</li>
+  <li>Excessive noise for a real environment.</li>
+</ul>
+
+<p>APM stopped being a diagnostic tool and became a data volcano.</p>
+
+<h2 id="a-better-balance-inferred-spans-via-profiling">A better balance: inferred spans via profiling</h2>
+
+<p>Looking for a more reasonable alternative, I enabled inferred spans through profiling:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">ELASTIC_APM_PROFILING_INFERRED_SPANS_ENABLED</span>
+  <span class="na">value</span><span class="pi">:</span> <span class="s2">"</span><span class="s">true"</span>
+
+<span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">ELASTIC_APM_PROFILING_INFERRED_SPANS_MIN_DURATION</span>
+  <span class="na">value</span><span class="pi">:</span> <span class="s2">"</span><span class="s">10ms"</span>
+
+<span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">ELASTIC_APM_PROFILING_INFERRED_SPANS_SAMPLING_INTERVAL</span>
+  <span class="na">value</span><span class="pi">:</span> <span class="s2">"</span><span class="s">50ms"</span>
+</code></pre></div></div>
+
+<p>There was a clear shift here:</p>
+
+<ul>
+  <li>Traces started showing much more internal detail.</li>
+  <li>The actual path of the request was easier to understand.</li>
+  <li>Without the cost or verbosity of TRACE_METHODS.</li>
+</ul>
+
+<p>APM started being truly useful.</p>
+
+<p>But errors still didn’t appear.</p>
+
+<p><img src="/assets/img/elastic-image-2.png" alt="Inferred spans with profiling" style="max-width: 600px; margin: 20px 0;" /></p>
+
+<h2 id="the-focus-mistake">The focus mistake</h2>
+
+<p>At that point it was clear that:</p>
+
+<ul>
+  <li>The agent worked.</li>
+  <li>Instrumentation worked.</li>
+  <li>Traces were being generated correctly.</li>
+</ul>
+
+<p>The problem wasn’t in how data was captured, but in what happened to it after.</p>
+
+<h2 id="the-real-culprit-templates-and-ilm-overriding-apm">The real culprit: templates and ILM overriding APM</h2>
+
+<p>The real cause wasn’t in APM, but in log management.</p>
+
+<p>There was a <strong>generic template for <code class="language-plaintext highlighter-rouge">logs-*-*</code></strong> with higher priority than APM-specific templates.
+This meant that for data streams like <code class="language-plaintext highlighter-rouge">logs-apm.error-*</code>, the generic template would win instead of what Fleet and APM expect.</p>
+
+<p>Also, ILM operations were being applied indiscriminately to all data streams under <code class="language-plaintext highlighter-rouge">logs-*</code>, including APM’s, which have:</p>
+
+<ul>
+  <li>Specific pipelines.</li>
+  <li>Concrete mappings.</li>
+  <li>Their own lifecycle policies.</li>
+</ul>
+
+<p>The effect was <strong>silent but devastating</strong>:</p>
+
+<ul>
+  <li>Transactions kept appearing.</li>
+  <li>Traces remained visible.</li>
+  <li>But errors and stacktraces were degraded or directly invisible.</li>
+</ul>
+
+<h2 id="why-apm-seemed-empty-when-filtering">Why APM seemed “empty” when filtering</h2>
+
+<p>The APM UI depends critically on fields like:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">service.name</code></li>
+  <li><code class="language-plaintext highlighter-rouge">service.environment</code></li>
+</ul>
+
+<p>When APM templates were being overridden:</p>
+
+<ul>
+  <li>These fields stopped behaving as APM expects.</li>
+  <li>They weren’t aggregatable the right way.</li>
+  <li>Filters by service or environment returned nothing.</li>
+</ul>
+
+<p>From Kibana, the feeling was clear:</p>
+
+<blockquote>
+  <p>No errors.</p>
+</blockquote>
+
+<p>In reality:</p>
+
+<blockquote>
+  <p>Errors existed, but APM couldn’t represent them correctly.</p>
+</blockquote>
+
+<h2 id="why-this-problem-is-so-hard-to-detect">Why this problem is so hard to detect</h2>
+
+<p>Elastic doesn’t raise alerts for this.
+There are no obvious errors.
+No clear messages in the UI.</p>
+
+<p>APM simply stops showing part of the information.</p>
+
+<p>And that’s the most dangerous part:</p>
+
+<ul>
+  <li>You think the problem is the agent.</li>
+  <li>You adjust instrumentation.</li>
+  <li>You change sampling.</li>
+  <li>You add profiling.</li>
+</ul>
+
+<p>When the real problem is in the data’s lifecycle and templates.</p>
+
+<h2 id="the-real-lesson">The real lesson</h2>
+
+<p>This case left several important lessons:</p>
 
 <ol>
-  <li>The SDK tries to get credentials by calling the <strong>metadata server</strong> (as it would on a Compute Engine VM).</li>
-  <li>On GKE, that call is handled by the <strong>GKE metadata server</strong>, which knows which Pod is making the request.</li>
-  <li>The metadata server identifies the <strong>Kubernetes Service Account (KSA)</strong> of the Pod.</li>
-  <li>From the KSA, it applies the mapping to the <strong>Google Service Account (GSA)</strong> configured.</li>
-  <li>It returns to the Pod a <strong>Google Cloud token</strong> with the permissions of the GSA.</li>
+  <li><strong>APM can work partially</strong> and still seem “correct”.</li>
+  <li><strong>Seeing transactions doesn’t guarantee seeing errors.</strong></li>
+  <li><strong>Adding more instrumentation</strong> can improve detail, but doesn’t fix ingestion or lifecycle problems.</li>
+  <li><strong>APM’s templates and ILM policies</strong> aren’t interchangeable with generic log ones.</li>
 </ol>
 
-<p>From the perspective of the Pod and the application:</p>
+<p>And the most important:</p>
 
-<ul>
-  <li>No keys</li>
-  <li>No special configuration in the code</li>
-  <li>It simply “has permissions” to access Cloud Storage</li>
-</ul>
+<blockquote>
+  <p>In observability, it’s not enough for data to arrive.
+It has to arrive in the exact shape the tool expects.</p>
+</blockquote>
 
-<p>The Pod believes it’s running with valid Google Cloud credentials, when in reality GKE is doing all the <strong>KSA → GSA</strong> translation transparently.</p>
+<p><img src="/assets/img/elastic-image-3.png" alt="Elasticsearch templates and ILM" style="max-width: 600px; margin: 20px 0;" /></p>
 
-<h2 id="typical-workload-identity-setup-ksa--gsa-on-gke">Typical Workload Identity setup (KSA ↔ GSA) on GKE</h2>
+<h2 id="closing">Closing</h2>
 
-<p>At a high level, the configuration flow is:</p>
+<p>Elastic APM was doing its job from the first moment.
+The errors existed too.</p>
 
-<ol>
-  <li>Create a <strong>Google Service Account (GSA)</strong> in IAM.</li>
-  <li>Assign it the necessary roles (for example, <code class="language-plaintext highlighter-rouge">roles/dns.admin</code> if you’re going to manipulate Cloud DNS).</li>
-  <li>Allow the <strong>Kubernetes ServiceAccount (KSA)</strong> to impersonate the GSA by granting <code class="language-plaintext highlighter-rouge">roles/iam.workloadIdentityUser</code> to the KSA principal on the GSA.</li>
-  <li>Annotate the <strong>KSA</strong> with the GSA email (<code class="language-plaintext highlighter-rouge">iam.gke.io/gcp-service-account</code>).</li>
-  <li>Configure Pods to use that KSA (<code class="language-plaintext highlighter-rouge">serviceAccountName</code>).</li>
-</ol>
+<p>The problem was less visible and more dangerous:
+generic log configuration silently degrading APM.</p>
 
-<h3 id="verifying-the-pods-identity">Verifying the Pod’s identity</h3>
+<p>Sometimes the problem isn’t that data isn’t generated, but that it’s processed correctly.</p>
 
-<p>A simple way to check what identity a Pod is resolving is to query the metadata server:</p>
+<p>If you’re operating Elastic and encounter similar APM or observability issues, you can <a href="/en/contact">contact me</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Elastic APM seemed to work perfectly, but errors weren't showing up. The problem wasn't with the agent—it was with log templates.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/apm-elastic-errors.png" /><media:content medium="image" url="http://localhost:4000/assets/img/apm-elastic-errors.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">How to structure your Terraform projects? Workspaces vs per-environment repositories</title><link href="http://localhost:4000/2026/01/21/terraform-structures-workspaces-versioned-modules-en/" rel="alternate" type="text/html" title="How to structure your Terraform projects? Workspaces vs per-environment repositories" /><published>2026-01-21T00:00:00+01:00</published><updated>2026-01-21T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/21/terraform-structures-workspaces-versioned-modules-en</id><content type="html" xml:base="http://localhost:4000/2026/01/21/terraform-structures-workspaces-versioned-modules-en/"><![CDATA[<p>Many teams commonly use a Terraform structure based on a single repository, with folders per environment (prod, preprod, staging) and a common folder for reusable modules. Although this is not an official standard defined by Terraform, it is a widely adopted pattern in the community, especially in teams that are starting to scale their infrastructure as code.</p>
 
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-s</span> <span class="nt">-H</span> <span class="s2">"Metadata-Flavor: Google"</span> <span class="se">\</span>
-  <span class="s2">"http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email"</span>
-<span class="nb">echo</span>
+<p>A typical example of this approach would be:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>terraform-infra/
+├── modules/
+│   ├── vpc/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── eks/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   └── rds/
+│       ├── main.tf
+│       ├── variables.tf
+│       └── outputs.tf
+├── prod/
+│   ├── backend.tf
+│   ├── providers.tf
+│   ├── main.tf
+│   ├── variables.tf
+│   └── terraform.tfvars
+├── preprod/
+│   ├── backend.tf
+│   ├── providers.tf
+│   ├── main.tf
+│   ├── variables.tf
+│   └── terraform.tfvars
+└── staging/
+    ├── backend.tf
+    ├── providers.tf
+    ├── main.tf
+    ├── variables.tf
+    └── terraform.tfvars
 </code></pre></div></div>
 
-<p>Expected output examples:</p>
+<p>In this model, each environment references the local modules defined within the same repository, for example from <code class="language-plaintext highlighter-rouge">prod/main.tf</code>:</p>
 
-<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Workload Identity working correctly (GSA associated with the Pod)
-certmanager-igeo-operations@igeooperations.iam.gserviceaccount.com
+<div class="language-hcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">module</span> <span class="s2">"vpc"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"../modules/vpc"</span>
+  <span class="nx">name</span>   <span class="o">=</span> <span class="s2">"prod"</span>
+<span class="p">}</span>
+
+<span class="nx">module</span> <span class="s2">"eks"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"../modules/eks"</span>
+<span class="p">}</span>
 </code></pre></div></div>
 
-<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Workload Identity broken (node identity)
-gke-node-sa-igeo-operations@igeooperations.iam.gserviceaccount.com
+<p>This approach works well in small teams or early stages, and is often combined with <strong>Terraform workspaces</strong> to manage multiple states from the same codebase.</p>
+
+<h2 id="workspaces-context-and-limitations">Workspaces: context and limitations</h2>
+
+<p>Terraform, by design, is flexible regarding code organization and does not impose a specific structure. In this context, Terraform workspaces often appear as a natural solution for managing multiple environments from the same codebase, something that fits especially well with <strong>Terraform Cloud</strong>, where the workspace is explicitly selected from the interface and is clearly associated with a specific state, variables, and policies.</p>
+
+<p>However, outside of Terraform Cloud, using workspaces introduces certain operational risks. In local execution or generic pipelines, the active workspace depends on the command context (<code class="language-plaintext highlighter-rouge">terraform workspace select</code>). This makes human error more likely: an <code class="language-plaintext highlighter-rouge">apply</code> executed in the wrong workspace can impact the wrong environment if there are no additional controls.</p>
+
+<p>Terraform’s official documentation acknowledges this limitation and, in the <strong>Alternatives to Workspaces</strong> section, proposes a different strategy for more complex scenarios:</p>
+
+<blockquote>
+  <p>“Instead of creating CLI workspaces, you can use one or more re-usable modules to represent the common elements and then represent each instance as a separate configuration that instantiates those common elements in the context of a different backend.”</p>
+
+  <p>— <a href="https://developer.hashicorp.com/terraform/cli/workspaces#alternatives-to-workspaces">Terraform CLI – Workspaces</a></p>
+</blockquote>
+
+<p>This supports the idea that, when environments require clear isolation — for example, different backends, credentials, or domains of responsibility — using separate configurations that consume reusable modules can be more robust than relying solely on CLI workspaces.</p>
+
+<h2 id="one-repository-per-environment">One repository per environment</h2>
+
+<p>From this perspective, a common alternative in production environments is to use <strong>one repository per environment</strong>. In this model, each environment (production, preproduction, etc.) has its own repository, its own backend, its own state, and its own access controls, significantly reducing the risk of operational errors.</p>
+
+<p>Reusability is achieved through <strong>shared modules</strong>, ideally hosted in independent repositories, with explicit and controlled versioning. Terraform not only supports this approach but documents it clearly.</p>
+
+<p>In the official documentation on module configuration, Terraform explains how to install specific versions of a module, both from registries and Git repositories, allowing you to pin a version using tags, branches, or hashes:</p>
+
+<blockquote>
+  <p>“If you are using modules hosted in GitHub, BitBucket, or another Git repository, Terraform clones and uses the default branch referenced by HEAD. You can add the ref query parameter to the location specified in the source argument to reference any value supported by the git checkout command, such as a branch, SHA-1 hash, or tag.”</p>
+
+  <p>— <a href="https://developer.hashicorp.com/terraform/language/modules/configuration">Terraform – Module Configuration</a></p>
+</blockquote>
+
+<p>The documentation includes explicit examples using versioned tags and hashes to pin the exact module version:</p>
+
+<div class="language-hcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">module</span> <span class="s2">"vpc"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://example.com/vpc.git?ref=v1.2.0"</span>
+<span class="p">}</span>
+
+<span class="nx">module</span> <span class="s2">"storage"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://example.com/storage.git?ref=51d462976d84fdea54b47d80dcabbf680badcdb8"</span>
+<span class="p">}</span>
 </code></pre></div></div>
 
-<p>If you see the GSA associated with the Pod, Workload Identity is working.
-If you see the node’s service account, something is interfering with the process.</p>
+<p>This approach allows different environments to consume the same module, but with different versions and variables, enabling controlled infrastructure evolution without breaking existing environments.</p>
 
-<p>For a more complete check, you can also directly request a token:</p>
+<h2 id="practical-example-repositories-per-environment-with-versioned-modules">Practical example: repositories per environment with versioned modules</h2>
 
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-s</span> <span class="nt">-H</span> <span class="s2">"Metadata-Flavor: Google"</span> <span class="se">\</span>
-  <span class="s2">"http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"</span>
+<p>A practical implementation of this approach is to separate environments into independent repositories and consume shared modules from external repositories, pinning specific versions.</p>
+
+<h3 id="module-repositories-shared">Module repositories (shared)</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tf-modules-vpc/        (tags: v1.2.0, v1.3.0, v2.0.0)
+tf-modules-eks/        (tags: v0.9.1, v1.0.0)
+tf-modules-rds/        (tags: v3.4.2)
 </code></pre></div></div>
 
-<h2 id="the-problem-cilium-with-bpf-masquerade">The problem: Cilium with BPF masquerade</h2>
+<p>Each module is developed, evolved, and versioned independently.</p>
 
-<p>For Workload Identity to work correctly, the GKE metadata server needs to <strong>attribute each request to the correct Pod</strong>.
-One of the key pieces to do this is the <strong>network identity of the request</strong>, typically the Pod’s source IP.</p>
+<h3 id="environment-repository-preproduction">Environment repository: preproduction</h3>
 
-<p>This is where Cilium comes in.</p>
-
-<p>Cilium implements masquerading/NAT for outbound traffic: in practice, <strong>it can hide the Pod’s IP behind the node’s IP</strong> when traffic leaves the cluster.</p>
-
-<p>In Helm values, this is typically configured like:</p>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">bpf</span><span class="pi">:</span>
-  <span class="na">masquerade</span><span class="pi">:</span> <span class="kc">true</span>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>infra-preprod/
+├── backend.tf
+├── providers.tf
+├── versions.tf
+├── main.tf
+├── variables.tf
+└── env/
+    └── preprod.tfvars
 </code></pre></div></div>
 
-<p>In certain scenarios on GKE, with <code class="language-plaintext highlighter-rouge">bpf.masquerade: true</code>, the Pod’s request to the metadata server can be <strong>SNATeated</strong>. When this happens, the metadata server sees the request as if it came from the <strong>node</strong>, not the <strong>Pod</strong>.</p>
+<p>Example of module consumption in <code class="language-plaintext highlighter-rouge">infra-preprod/main.tf</code>:</p>
 
-<p>The result is as follows:</p>
+<div class="language-hcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">module</span> <span class="s2">"vpc"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://github.com/your-org/tf-modules-vpc.git?ref=v1.3.0"</span>
+  <span class="nx">name</span>   <span class="o">=</span> <span class="s2">"preprod"</span>
+<span class="p">}</span>
 
-<ul>
-  <li>The metadata server can no longer associate the request with the KSA.</li>
-  <li>The KSA → GSA mapping is not applied.</li>
-  <li>The response falls back to the <strong>node service account</strong>.</li>
-</ul>
-
-<p>The symptom is very clear:</p>
-
-<ul>
-  <li>
-    <p><strong>Before (without masquerade):</strong></p>
-
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">.../default/email</code> returns the <strong>Pod’s GSA</strong>.</li>
-    </ul>
-  </li>
-  <li>
-    <p><strong>With BPF masquerade enabled:</strong></p>
-
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">.../default/email</code> returns the <strong>node service account</strong>.</li>
-      <li>The Pod inherits the permissions (or lack thereof) of the node, not the expected ones.</li>
-    </ul>
-  </li>
-</ul>
-
-<p>This type of breakage is documented in Cilium issues on GKE related to metadata and Workload Identity when using the BPF datapath.</p>
-
-<h2 id="practical-recommendation-on-gke-with-cloud-nat-avoid-bpf-masquerade">Practical recommendation: on GKE with Cloud NAT, avoid BPF masquerade</h2>
-
-<p>If your nodes are private and you have <strong>Cloud NAT for egress</strong>, you normally <strong>don’t need</strong> <code class="language-plaintext highlighter-rouge">bpf.masquerade</code> to have Internet connectivity: egress will still exit with the Cloud NAT’s public IPs anyway.</p>
-
-<p>In that context, <code class="language-plaintext highlighter-rouge">bpf.masquerade</code> usually adds little value and, as you’ve seen, can introduce hard-to-diagnose side effects.</p>
-
-<p>The operational recommendation is:</p>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">bpf</span><span class="pi">:</span>
-  <span class="na">masquerade</span><span class="pi">:</span> <span class="kc">false</span>
+<span class="nx">module</span> <span class="s2">"eks"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://github.com/your-org/tf-modules-eks.git?ref=v1.0.0"</span>
+<span class="p">}</span>
 </code></pre></div></div>
 
-<p>After that, validate that:</p>
+<h3 id="environment-repository-production">Environment repository: production</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>infra-prod/
+├── backend.tf
+├── providers.tf
+├── versions.tf
+├── main.tf
+├── variables.tf
+└── env/
+    └── prod.tfvars
+</code></pre></div></div>
+
+<p>Example of module consumption in <code class="language-plaintext highlighter-rouge">infra-prod/main.tf</code>:</p>
+
+<div class="language-hcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">module</span> <span class="s2">"vpc"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://github.com/your-org/tf-modules-vpc.git?ref=v1.2.0"</span>
+  <span class="nx">name</span>   <span class="o">=</span> <span class="s2">"prod"</span>
+<span class="p">}</span>
+
+<span class="nx">module</span> <span class="s2">"eks"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://github.com/your-org/tf-modules-eks.git?ref=v0.9.1"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="advantages-of-this-model">Advantages of this model</h3>
+
+<p>With this approach:</p>
 
 <ul>
-  <li>Egress (outbound to the Internet / external APIs) works correctly.</li>
-  <li>Workload Identity resolves the correct GSA again.</li>
+  <li>Both environments reuse the same modules</li>
+  <li>Each environment explicitly pins the module version it consumes</li>
+  <li>Preproduction can advance versions before production</li>
+  <li>Production remains stable until an update is decided</li>
 </ul>
 
-<h2 id="if-you-need-snat-for-specific-reasons">If you need SNAT for specific reasons</h2>
+<h2 id="conclusion">Conclusion</h2>
 
-<p>If at some point you need masquerade for a specific case (complex return routes, egress gateway, etc.), the correct approach is to <strong>masquerade normal traffic but exclude metadata/link-local</strong>, since Workload Identity depends on those calls.</p>
+<p>Terraform workspaces fit very well when used alongside Terraform Cloud and clear controls from the platform. However, for organizations with multiple critical environments, automated pipelines, and strong isolation needs, a model based on <strong>repositories per environment</strong>, combined with <strong>versioned reusable modules</strong>, typically offers greater clarity, control, and long-term operational security.</p>
 
-<p>Common alternatives:</p>
+<h2 id="other-useful-hashicorp-resources">Other useful HashiCorp resources</h2>
+
+<p>To dive deeper into different approaches for organizing Terraform code and better understand the trade-offs between structures, repositories, and modules, these official HashiCorp resources are especially useful:</p>
+
+<p><strong><a href="https://www.hashicorp.com/en/blog/terraform-mono-repo-vs-multi-repo-the-great-debate">Terraform Mono-Repo vs Multi-Repo: The Great Debate</a></strong><br />
+An analysis of the advantages and disadvantages between monorepo and multi-repo approaches applied to Terraform, highlighting that the decision depends on organizational and operational context.</p>
+
+<p><strong><a href="https://www.hashicorp.com/en/blog/structuring-hashicorp-terraform-configuration-for-production">Structuring Terraform Configuration for Production</a></strong><br />
+Recommendations for evolving Terraform configurations toward production environments, emphasizing separation of responsibilities and the use of reusable modules.</p>
+
+<p><strong><a href="https://developer.hashicorp.com/terraform/cli/workspaces#alternatives-to-workspaces">Terraform CLI – Workspaces (Alternatives to Workspaces)</a></strong><br />
+Official documentation where HashiCorp explicitly describes alternatives to workspaces based on separate configurations that reuse common modules with different backends.</p>
+
+<p><strong><a href="https://developer.hashicorp.com/terraform/language/modules/configuration">Terraform – Module Configuration</a></strong><br />
+Official documentation on how to consume modules from registries or Git repositories, including versioning via tags, branches, or hashes.</p>
+
+<p>If you’re interested in this kind of architecture, you can learn more about my experience or <a href="/en/contact">get in touch</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Many teams use a Terraform structure based on a single repository with folders per environment. While it works, there are more robust alternatives for production environments.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/non_recommended_structure_terraform.png" /><media:content medium="image" url="http://localhost:4000/assets/img/non_recommended_structure_terraform.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="es"><title type="html">¿Cómo estructurar tus proyectos Terraform? Workspaces vs repositorios por entorno</title><link href="http://localhost:4000/2026/01/21/estructuras-terraform-workspaces-modulos-versionados-es/" rel="alternate" type="text/html" title="¿Cómo estructurar tus proyectos Terraform? Workspaces vs repositorios por entorno" /><published>2026-01-21T00:00:00+01:00</published><updated>2026-01-21T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/21/estructuras-terraform-workspaces-modulos-versionados-es</id><content type="html" xml:base="http://localhost:4000/2026/01/21/estructuras-terraform-workspaces-modulos-versionados-es/"><![CDATA[<p>En muchos equipos es habitual encontrar una estructura de Terraform basada en un único repositorio, con carpetas por entorno (prod, preprod, staging) y una carpeta común de módulos reutilizables. Aunque no es un estándar oficial definido por Terraform, sí es un patrón muy extendido en la comunidad, especialmente en equipos que empiezan a escalar su infraestructura como código.</p>
+
+<p>Un ejemplo típico de este enfoque sería el siguiente:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>terraform-infra/
+├── modules/
+│   ├── vpc/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── eks/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   └── rds/
+│       ├── main.tf
+│       ├── variables.tf
+│       └── outputs.tf
+├── prod/
+│   ├── backend.tf
+│   ├── providers.tf
+│   ├── main.tf
+│   ├── variables.tf
+│   └── terraform.tfvars
+├── preprod/
+│   ├── backend.tf
+│   ├── providers.tf
+│   ├── main.tf
+│   ├── variables.tf
+│   └── terraform.tfvars
+└── staging/
+    ├── backend.tf
+    ├── providers.tf
+    ├── main.tf
+    ├── variables.tf
+    └── terraform.tfvars
+</code></pre></div></div>
+
+<p>En este modelo, cada entorno referencia los módulos locales definidos dentro del mismo repositorio, por ejemplo desde <code class="language-plaintext highlighter-rouge">prod/main.tf</code>:</p>
+
+<div class="language-hcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">module</span> <span class="s2">"vpc"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"../modules/vpc"</span>
+  <span class="nx">name</span>   <span class="o">=</span> <span class="s2">"prod"</span>
+<span class="p">}</span>
+
+<span class="nx">module</span> <span class="s2">"eks"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"../modules/eks"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Este enfoque funciona bien en equipos pequeños o en fases iniciales, y suele combinarse con <strong>Terraform workspaces</strong> para gestionar múltiples estados desde la misma base de código.</p>
+
+<h2 id="workspaces-contexto-y-limitaciones">Workspaces: contexto y limitaciones</h2>
+
+<p>Terraform, por diseño, es flexible respecto a la organización del código y no impone una estructura concreta. En este contexto, los Terraform workspaces suelen aparecer como una solución natural para gestionar múltiples entornos desde la misma base de código, algo que encaja especialmente bien con <strong>Terraform Cloud</strong>, donde el workspace se selecciona explícitamente desde la interfaz y queda claramente asociado a un estado, variables y políticas concretas.</p>
+
+<p>Sin embargo, fuera de Terraform Cloud, el uso de workspaces introduce ciertos riesgos operativos. En ejecución local o en pipelines genéricas, el workspace activo depende del contexto del comando (<code class="language-plaintext highlighter-rouge">terraform workspace select</code>). Esto hace que el error humano sea más probable: un <code class="language-plaintext highlighter-rouge">apply</code> ejecutado en el workspace incorrecto puede impactar en el entorno equivocado si no existen controles adicionales.</p>
+
+<p>La propia documentación oficial de Terraform reconoce esta limitación y, en la sección <strong>Alternatives to Workspaces</strong>, propone una estrategia distinta para escenarios más complejos:</p>
+
+<blockquote>
+  <p>“Instead of creating CLI workspaces, you can use one or more re-usable modules to represent the common elements and then represent each instance as a separate configuration that instantiates those common elements in the context of a different backend.”</p>
+
+  <p>— <a href="https://developer.hashicorp.com/terraform/cli/workspaces#alternatives-to-workspaces">Terraform CLI – Workspaces</a></p>
+</blockquote>
+
+<p>Esto respalda la idea de que, cuando los entornos requieren un aislamiento claro —por ejemplo distintos backends, credenciales o dominios de responsabilidad— usar configuraciones separadas que consumen módulos reutilizables puede ser más robusto que depender únicamente de workspaces en la CLI.</p>
+
+<h2 id="un-repositorio-por-entorno">Un repositorio por entorno</h2>
+
+<p>Desde esta perspectiva, una alternativa habitual en entornos productivos es utilizar <strong>un repositorio por entorno</strong>. En este modelo, cada entorno (producción, preproducción, etc.) tiene su propio repositorio, su propio backend, su propio estado y su propio control de accesos, reduciendo significativamente el riesgo de errores operativos.</p>
+
+<p>La reutilización se consigue mediante <strong>módulos compartidos</strong>, idealmente alojados en repositorios independientes, con versionado explícito y controlado. Terraform no solo soporta este enfoque, sino que lo documenta de forma clara.</p>
+
+<p>En la documentación oficial sobre configuración de módulos, Terraform explica cómo instalar versiones concretas de un módulo, tanto desde registries como desde repositorios Git, permitiendo fijar una versión mediante tags, ramas o hashes:</p>
+
+<blockquote>
+  <p>“If you are using modules hosted in GitHub, BitBucket, or another Git repository, Terraform clones and uses the default branch referenced by HEAD. You can add the ref query parameter to the location specified in the source argument to reference any value supported by the git checkout command, such as a branch, SHA-1 hash, or tag.”</p>
+
+  <p>— <a href="https://developer.hashicorp.com/terraform/language/modules/configuration">Terraform – Module Configuration</a></p>
+</blockquote>
+
+<p>La propia documentación incluye ejemplos explícitos utilizando tags versionados y hashes para fijar la versión exacta del módulo:</p>
+
+<div class="language-hcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">module</span> <span class="s2">"vpc"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://example.com/vpc.git?ref=v1.2.0"</span>
+<span class="p">}</span>
+
+<span class="nx">module</span> <span class="s2">"storage"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://example.com/storage.git?ref=51d462976d84fdea54b47d80dcabbf680badcdb8"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Este enfoque permite que distintos entornos consuman el mismo módulo, pero con versiones distintas y variables distintas, facilitando una evolución controlada de la infraestructura sin romper entornos existentes.</p>
+
+<h2 id="ejemplo-práctico-repositorios-por-entorno-con-módulos-versionados">Ejemplo práctico: repositorios por entorno con módulos versionados</h2>
+
+<p>Una posible materialización práctica de este enfoque es separar los entornos en repositorios independientes y consumir módulos compartidos desde repositorios externos, fijando versiones concretas.</p>
+
+<h3 id="repositorios-de-módulos-compartidos">Repositorios de módulos (compartidos)</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tf-modules-vpc/        (tags: v1.2.0, v1.3.0, v2.0.0)
+tf-modules-eks/        (tags: v0.9.1, v1.0.0)
+tf-modules-rds/        (tags: v3.4.2)
+</code></pre></div></div>
+
+<p>Cada módulo se desarrolla, evoluciona y versiona de forma independiente.</p>
+
+<h3 id="repositorio-de-entorno-preproducción">Repositorio de entorno: preproducción</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>infra-preprod/
+├── backend.tf
+├── providers.tf
+├── versions.tf
+├── main.tf
+├── variables.tf
+└── env/
+    └── preprod.tfvars
+</code></pre></div></div>
+
+<p>Ejemplo de consumo de módulos en <code class="language-plaintext highlighter-rouge">infra-preprod/main.tf</code>:</p>
+
+<div class="language-hcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">module</span> <span class="s2">"vpc"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://github.com/tu-org/tf-modules-vpc.git?ref=v1.3.0"</span>
+  <span class="nx">name</span>   <span class="o">=</span> <span class="s2">"preprod"</span>
+<span class="p">}</span>
+
+<span class="nx">module</span> <span class="s2">"eks"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://github.com/tu-org/tf-modules-eks.git?ref=v1.0.0"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="repositorio-de-entorno-producción">Repositorio de entorno: producción</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>infra-prod/
+├── backend.tf
+├── providers.tf
+├── versions.tf
+├── main.tf
+├── variables.tf
+└── env/
+    └── prod.tfvars
+</code></pre></div></div>
+
+<p>Ejemplo de consumo de módulos en <code class="language-plaintext highlighter-rouge">infra-prod/main.tf</code>:</p>
+
+<div class="language-hcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">module</span> <span class="s2">"vpc"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://github.com/tu-org/tf-modules-vpc.git?ref=v1.2.0"</span>
+  <span class="nx">name</span>   <span class="o">=</span> <span class="s2">"prod"</span>
+<span class="p">}</span>
+
+<span class="nx">module</span> <span class="s2">"eks"</span> <span class="p">{</span>
+  <span class="nx">source</span> <span class="o">=</span> <span class="s2">"git::https://github.com/tu-org/tf-modules-eks.git?ref=v0.9.1"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="ventajas-de-este-modelo">Ventajas de este modelo</h3>
+
+<p>De este modo:</p>
 
 <ul>
-  <li>Use <code class="language-plaintext highlighter-rouge">ip-masq-agent</code> with <code class="language-plaintext highlighter-rouge">masqLinkLocal: false</code> and explicit exclusion of <code class="language-plaintext highlighter-rouge">169.254.0.0/16</code>.</li>
-  <li>Adjust your Cilium configuration or version to avoid SNAT toward the metadata server.</li>
+  <li>Ambos entornos reutilizan los mismos módulos</li>
+  <li>Cada entorno fija explícitamente la versión del módulo que consume</li>
+  <li>Preproducción puede avanzar versiones antes que producción</li>
+  <li>Producción permanece estable hasta que se decide actualizar</li>
 </ul>
 
-<h2 id="summary">Summary</h2>
+<h2 id="conclusión">Conclusión</h2>
 
-<ul>
-  <li>Workload Identity on GKE relies on the <strong>GKE metadata server</strong> to deliver credentials of the <strong>GSA</strong> associated with the <strong>KSA</strong>.</li>
-  <li>The metadata server needs to be able to attribute the request to the correct Pod.</li>
-  <li>With Cilium and <code class="language-plaintext highlighter-rouge">bpf.masquerade: true</code>, traffic toward metadata can be SNATeated and “appear” to come from the node.</li>
-  <li>In that case, Workload Identity breaks and the Pod starts using the node’s service account.</li>
-  <li>If you have Cloud NAT, leaving <code class="language-plaintext highlighter-rouge">masquerade: false</code> is usually safer and sufficient for egress.</li>
-</ul>
+<p>Los Terraform workspaces encajan muy bien cuando se usan junto con Terraform Cloud y controles claros desde la plataforma. Sin embargo, para organizaciones con múltiples entornos críticos, pipelines automatizadas y necesidades fuertes de aislamiento, un modelo basado en <strong>repositorios por entorno</strong>, combinado con <strong>módulos reutilizables versionados</strong>, suele ofrecer mayor claridad, control y seguridad operativa a largo plazo.</p>
 
-<p>If you’re operating Cilium on GKE and see strange behavior with Workload Identity, first review your masquerade configuration.
-And if you want to discuss these design trade-offs, <a href="/en/contact">feel free to get in touch</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Cilium with BPF masquerade can interfere with Workload Identity on GKE, causing Pods to use the node service account instead of the expected one.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/cilium-cab-break-wi.png" /><media:content medium="image" url="http://localhost:4000/assets/img/cilium-cab-break-wi.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="es"><title type="html">Cilium BPF masquerade puede romper Workload Identity en GKE</title><link href="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-es/" rel="alternate" type="text/html" title="Cilium BPF masquerade puede romper Workload Identity en GKE" /><published>2026-01-16T00:00:00+01:00</published><updated>2026-01-16T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-es</id><content type="html" xml:base="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-es/"><![CDATA[<p>En GKE, <strong>Workload Identity Federation for GKE</strong> permite que un Pod obtenga credenciales de Google Cloud <strong>sin claves</strong> y con permisos definidos en IAM. La idea es simple: el Pod usa un <strong>Kubernetes ServiceAccount (KSA)</strong>, que se mapea a un <strong>Google Service Account (GSA)</strong>, y las llamadas a APIs de Google se autorizan con los roles del GSA.</p>
+<h2 id="otros-recursos-interesantes-de-hashicorp">Otros recursos interesantes de HashiCorp</h2>
+
+<p>Para profundizar en los distintos enfoques de organización de código Terraform y entender mejor los trade-offs entre estructuras, repositorios y módulos, estos recursos oficiales de HashiCorp resultan especialmente útiles:</p>
+
+<p><strong><a href="https://www.hashicorp.com/en/blog/terraform-mono-repo-vs-multi-repo-the-great-debate">Terraform Mono-Repo vs Multi-Repo: The Great Debate</a></strong><br />
+Análisis de ventajas y desventajas entre enfoques monorepo y multi-repo aplicados a Terraform, destacando que la decisión depende del contexto organizativo y operativo.</p>
+
+<p><strong><a href="https://www.hashicorp.com/en/blog/structuring-hashicorp-terraform-configuration-for-production">Structuring Terraform Configuration for Production</a></strong><br />
+Recomendaciones para evolucionar configuraciones Terraform hacia entornos productivos, enfatizando la separación de responsabilidades y el uso de módulos reutilizables.</p>
+
+<p><strong><a href="https://developer.hashicorp.com/terraform/cli/workspaces#alternatives-to-workspaces">Terraform CLI – Workspaces (Alternatives to Workspaces)</a></strong><br />
+Documentación oficial donde HashiCorp describe explícitamente alternativas a los workspaces basadas en configuraciones separadas que reutilizan módulos comunes con backends distintos.</p>
+
+<p><strong><a href="https://developer.hashicorp.com/terraform/language/modules/configuration">Terraform – Module Configuration</a></strong><br />
+Documentación oficial sobre cómo consumir módulos desde registries o repositorios Git, incluyendo versionado mediante tags, ramas o hashes.</p>
+
+<p>Si te interesa este tipo de arquitecturas, puedes ver más sobre mi experiencia o <a href="/es/contacto">contactarme</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[En muchos equipos es habitual encontrar una estructura de Terraform basada en un único repositorio con carpetas por entorno. Aunque funciona, existen alternativas más robustas para entornos productivos.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/non_recommended_structure_terraform.png" /><media:content medium="image" url="http://localhost:4000/assets/img/non_recommended_structure_terraform.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="es"><title type="html">Cilium BPF masquerade puede romper Workload Identity en GKE</title><link href="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-es/" rel="alternate" type="text/html" title="Cilium BPF masquerade puede romper Workload Identity en GKE" /><published>2026-01-16T00:00:00+01:00</published><updated>2026-01-16T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-es</id><content type="html" xml:base="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-es/"><![CDATA[<p>En GKE, <strong>Workload Identity Federation for GKE</strong> permite que un Pod obtenga credenciales de Google Cloud <strong>sin claves</strong> y con permisos definidos en IAM. La idea es simple: el Pod usa un <strong>Kubernetes ServiceAccount (KSA)</strong>, que se mapea a un <strong>Google Service Account (GSA)</strong>, y las llamadas a APIs de Google se autorizan con los roles del GSA.</p>
 
 <h2 id="cómo-funciona-workload-identity-en-gke">Cómo funciona Workload Identity en GKE</h2>
 
@@ -334,7 +972,175 @@ Una de las piezas clave para hacerlo es la <strong>identidad de red de la petici
 </ul>
 
 <p>Si estás operando Cilium en GKE y ves comportamientos extraños con Workload Identity, revisa primero tu configuración de masquerade.
-Y si quieres discutir estos trade-offs de diseño, <a href="/es/contacto">ponte en contacto</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Cilium con BPF masquerade puede interferir con Workload Identity en GKE, causando que los Pods usen el service account del nodo en lugar del esperado.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/cilium-cab-break-wi.png" /><media:content medium="image" url="http://localhost:4000/assets/img/cilium-cab-break-wi.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="es"><title type="html">Exponiendo URLs internas y externas en GKE sin mezclar responsabilidades</title><link href="http://localhost:4000/2026/01/12/exponiendo-urls-internas-y-externas-en-gke-es/" rel="alternate" type="text/html" title="Exponiendo URLs internas y externas en GKE sin mezclar responsabilidades" /><published>2026-01-12T00:00:00+01:00</published><updated>2026-01-12T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/12/exponiendo-urls-internas-y-externas-en-gke-es</id><content type="html" xml:base="http://localhost:4000/2026/01/12/exponiendo-urls-internas-y-externas-en-gke-es/"><![CDATA[<p>Cuando diseñas una arquitectura en <strong>GCP con Kubernetes</strong>, una de las decisiones más importantes es <strong>cómo exponer tus URLs internas y externas sin mezclar responsabilidades ni comprometer seguridad</strong>.</p>
+Si te interesa este tipo de trabajo, puedes <a href="/es/contacto">contactarme</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Cilium con BPF masquerade puede interferir con Workload Identity en GKE, causando que los Pods usen el service account del nodo en lugar del esperado.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/cilium-cab-break-wi.png" /><media:content medium="image" url="http://localhost:4000/assets/img/cilium-cab-break-wi.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Cilium BPF masquerade can break Workload Identity on GKE</title><link href="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-en/" rel="alternate" type="text/html" title="Cilium BPF masquerade can break Workload Identity on GKE" /><published>2026-01-16T00:00:00+01:00</published><updated>2026-01-16T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-en</id><content type="html" xml:base="http://localhost:4000/2026/01/16/cilium-bpf-masquerade-workload-identity-gke-en/"><![CDATA[<p>On GKE, <strong>Workload Identity Federation for GKE</strong> allows a Pod to obtain Google Cloud credentials <strong>without keys</strong> and with permissions defined in IAM. The idea is straightforward: the Pod uses a <strong>Kubernetes ServiceAccount (KSA)</strong>, which maps to a <strong>Google Service Account (GSA)</strong>, and calls to Google APIs are authorized using the GSA’s roles.</p>
+
+<h2 id="how-workload-identity-works-on-gke">How Workload Identity works on GKE</h2>
+
+<p>Imagine a Pod that needs to <strong>access Cloud Storage</strong> to read or write objects in a bucket.</p>
+
+<p>Instead of using JSON keys, on GKE with Workload Identity you do the following:</p>
+
+<ol>
+  <li>You create a <strong>Google Service Account (GSA)</strong> with permissions on Cloud Storage (for example <code class="language-plaintext highlighter-rouge">roles/storage.objectViewer</code>).</li>
+  <li>You associate that GSA with a <strong>Kubernetes Service Account (KSA)</strong>.</li>
+  <li>You configure the Pod to use that KSA.</li>
+</ol>
+
+<p>From that moment on, that Pod <strong>has the permissions of the GSA</strong>, just as if it were that Google service account.</p>
+
+<h3 id="what-happens-inside-the-pod">What happens inside the Pod?</h3>
+
+<p>The Pod’s application (for example, using the official Google Cloud SDK) uses <strong>Application Default Credentials (ADC)</strong> without knowing anything about Kubernetes or IAM.</p>
+
+<p>When the application tries to access Cloud Storage:</p>
+
+<ol>
+  <li>The SDK tries to get credentials by calling the <strong>metadata server</strong> (as it would on a Compute Engine VM).</li>
+  <li>On GKE, that call is handled by the <strong>GKE metadata server</strong>, which knows which Pod is making the request.</li>
+  <li>The metadata server identifies the <strong>Kubernetes Service Account (KSA)</strong> of the Pod.</li>
+  <li>From the KSA, it applies the mapping to the <strong>Google Service Account (GSA)</strong> configured.</li>
+  <li>It returns to the Pod a <strong>Google Cloud token</strong> with the permissions of the GSA.</li>
+</ol>
+
+<p>From the perspective of the Pod and the application:</p>
+
+<ul>
+  <li>No keys</li>
+  <li>No special configuration in the code</li>
+  <li>It simply “has permissions” to access Cloud Storage</li>
+</ul>
+
+<p>The Pod believes it’s running with valid Google Cloud credentials, when in reality GKE is doing all the <strong>KSA → GSA</strong> translation transparently.</p>
+
+<h2 id="typical-workload-identity-setup-ksa--gsa-on-gke">Typical Workload Identity setup (KSA ↔ GSA) on GKE</h2>
+
+<p>At a high level, the configuration flow is:</p>
+
+<ol>
+  <li>Create a <strong>Google Service Account (GSA)</strong> in IAM.</li>
+  <li>Assign it the necessary roles (for example, <code class="language-plaintext highlighter-rouge">roles/dns.admin</code> if you’re going to manipulate Cloud DNS).</li>
+  <li>Allow the <strong>Kubernetes ServiceAccount (KSA)</strong> to impersonate the GSA by granting <code class="language-plaintext highlighter-rouge">roles/iam.workloadIdentityUser</code> to the KSA principal on the GSA.</li>
+  <li>Annotate the <strong>KSA</strong> with the GSA email (<code class="language-plaintext highlighter-rouge">iam.gke.io/gcp-service-account</code>).</li>
+  <li>Configure Pods to use that KSA (<code class="language-plaintext highlighter-rouge">serviceAccountName</code>).</li>
+</ol>
+
+<h3 id="verifying-the-pods-identity">Verifying the Pod’s identity</h3>
+
+<p>A simple way to check what identity a Pod is resolving is to query the metadata server:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-s</span> <span class="nt">-H</span> <span class="s2">"Metadata-Flavor: Google"</span> <span class="se">\</span>
+  <span class="s2">"http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email"</span>
+<span class="nb">echo</span>
+</code></pre></div></div>
+
+<p>Expected output examples:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Workload Identity working correctly (GSA associated with the Pod)
+certmanager-igeo-operations@igeooperations.iam.gserviceaccount.com
+</code></pre></div></div>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Workload Identity broken (node identity)
+gke-node-sa-igeo-operations@igeooperations.iam.gserviceaccount.com
+</code></pre></div></div>
+
+<p>If you see the GSA associated with the Pod, Workload Identity is working.
+If you see the node’s service account, something is interfering with the process.</p>
+
+<p>For a more complete check, you can also directly request a token:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-s</span> <span class="nt">-H</span> <span class="s2">"Metadata-Flavor: Google"</span> <span class="se">\</span>
+  <span class="s2">"http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"</span>
+</code></pre></div></div>
+
+<h2 id="the-problem-cilium-with-bpf-masquerade">The problem: Cilium with BPF masquerade</h2>
+
+<p>For Workload Identity to work correctly, the GKE metadata server needs to <strong>attribute each request to the correct Pod</strong>.
+One of the key pieces to do this is the <strong>network identity of the request</strong>, typically the Pod’s source IP.</p>
+
+<p>This is where Cilium comes in.</p>
+
+<p>Cilium implements masquerading/NAT for outbound traffic: in practice, <strong>it can hide the Pod’s IP behind the node’s IP</strong> when traffic leaves the cluster.</p>
+
+<p>In Helm values, this is typically configured like:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">bpf</span><span class="pi">:</span>
+  <span class="na">masquerade</span><span class="pi">:</span> <span class="kc">true</span>
+</code></pre></div></div>
+
+<p>In certain scenarios on GKE, with <code class="language-plaintext highlighter-rouge">bpf.masquerade: true</code>, the Pod’s request to the metadata server can be <strong>SNATeated</strong>. When this happens, the metadata server sees the request as if it came from the <strong>node</strong>, not the <strong>Pod</strong>.</p>
+
+<p>The result is as follows:</p>
+
+<ul>
+  <li>The metadata server can no longer associate the request with the KSA.</li>
+  <li>The KSA → GSA mapping is not applied.</li>
+  <li>The response falls back to the <strong>node service account</strong>.</li>
+</ul>
+
+<p>The symptom is very clear:</p>
+
+<ul>
+  <li>
+    <p><strong>Before (without masquerade):</strong></p>
+
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">.../default/email</code> returns the <strong>Pod’s GSA</strong>.</li>
+    </ul>
+  </li>
+  <li>
+    <p><strong>With BPF masquerade enabled:</strong></p>
+
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">.../default/email</code> returns the <strong>node service account</strong>.</li>
+      <li>The Pod inherits the permissions (or lack thereof) of the node, not the expected ones.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>This type of breakage is documented in Cilium issues on GKE related to metadata and Workload Identity when using the BPF datapath.</p>
+
+<h2 id="practical-recommendation-on-gke-with-cloud-nat-avoid-bpf-masquerade">Practical recommendation: on GKE with Cloud NAT, avoid BPF masquerade</h2>
+
+<p>If your nodes are private and you have <strong>Cloud NAT for egress</strong>, you normally <strong>don’t need</strong> <code class="language-plaintext highlighter-rouge">bpf.masquerade</code> to have Internet connectivity: egress will still exit with the Cloud NAT’s public IPs anyway.</p>
+
+<p>In that context, <code class="language-plaintext highlighter-rouge">bpf.masquerade</code> usually adds little value and, as you’ve seen, can introduce hard-to-diagnose side effects.</p>
+
+<p>The operational recommendation is:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">bpf</span><span class="pi">:</span>
+  <span class="na">masquerade</span><span class="pi">:</span> <span class="kc">false</span>
+</code></pre></div></div>
+
+<p>After that, validate that:</p>
+
+<ul>
+  <li>Egress (outbound to the Internet / external APIs) works correctly.</li>
+  <li>Workload Identity resolves the correct GSA again.</li>
+</ul>
+
+<h2 id="if-you-need-snat-for-specific-reasons">If you need SNAT for specific reasons</h2>
+
+<p>If at some point you need masquerade for a specific case (complex return routes, egress gateway, etc.), the correct approach is to <strong>masquerade normal traffic but exclude metadata/link-local</strong>, since Workload Identity depends on those calls.</p>
+
+<p>Common alternatives:</p>
+
+<ul>
+  <li>Use <code class="language-plaintext highlighter-rouge">ip-masq-agent</code> with <code class="language-plaintext highlighter-rouge">masqLinkLocal: false</code> and explicit exclusion of <code class="language-plaintext highlighter-rouge">169.254.0.0/16</code>.</li>
+  <li>Adjust your Cilium configuration or version to avoid SNAT toward the metadata server.</li>
+</ul>
+
+<h2 id="summary">Summary</h2>
+
+<ul>
+  <li>Workload Identity on GKE relies on the <strong>GKE metadata server</strong> to deliver credentials of the <strong>GSA</strong> associated with the <strong>KSA</strong>.</li>
+  <li>The metadata server needs to be able to attribute the request to the correct Pod.</li>
+  <li>With Cilium and <code class="language-plaintext highlighter-rouge">bpf.masquerade: true</code>, traffic toward metadata can be SNATeated and “appear” to come from the node.</li>
+  <li>In that case, Workload Identity breaks and the Pod starts using the node’s service account.</li>
+  <li>If you have Cloud NAT, leaving <code class="language-plaintext highlighter-rouge">masquerade: false</code> is usually safer and sufficient for egress.</li>
+</ul>
+
+<p>If you’re operating Cilium on GKE and see strange behavior with Workload Identity, first review your masquerade configuration.
+And if you want to discuss these design trade-offs, <a href="/en/contact">feel free to get in touch</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Cilium with BPF masquerade can interfere with Workload Identity on GKE, causing Pods to use the node service account instead of the expected one.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/cilium-cab-break-wi.png" /><media:content medium="image" url="http://localhost:4000/assets/img/cilium-cab-break-wi.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="es"><title type="html">Exponiendo URLs internas y externas en GKE sin mezclar responsabilidades</title><link href="http://localhost:4000/2026/01/12/exponiendo-urls-internas-y-externas-en-gke-es/" rel="alternate" type="text/html" title="Exponiendo URLs internas y externas en GKE sin mezclar responsabilidades" /><published>2026-01-12T00:00:00+01:00</published><updated>2026-01-12T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/12/exponiendo-urls-internas-y-externas-en-gke-es</id><content type="html" xml:base="http://localhost:4000/2026/01/12/exponiendo-urls-internas-y-externas-en-gke-es/"><![CDATA[<p>Cuando diseñas una arquitectura en <strong>GCP con Kubernetes</strong>, una de las decisiones más importantes es <strong>cómo exponer tus URLs internas y externas sin mezclar responsabilidades ni comprometer seguridad</strong>.</p>
 
 <p>No es un problema de “qué funciona”, sino de <strong>qué modelo mental quieres imponer a tu plataforma</strong>.</p>
 
@@ -435,7 +1241,7 @@ Lo que cambia es <strong>cómo</strong> se llega hasta ellos.</p>
 
 <p>Diseñar bien esta separación desde el principio ahorra complejidad, reduce riesgo operativo y hace que la arquitectura sea mucho más fácil de razonar a largo plazo.</p>
 
-<p>Si estás diseñando o evolucionando una plataforma en GKE y quieres comentar estos patrones, puedes <a href="/es/contact">contactar conmigo</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Diseñar correctamente cómo exponer servicios internos y externos en Kubernetes es clave para mantener aislamiento, seguridad y claridad operativa en GCP.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/load-balancers.png" /><media:content medium="image" url="http://localhost:4000/assets/img/load-balancers.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Exposing Internal and External URLs in GKE Without Mixing Responsibilities</title><link href="http://localhost:4000/2026/01/12/gke-internal-external-urls-en/" rel="alternate" type="text/html" title="Exposing Internal and External URLs in GKE Without Mixing Responsibilities" /><published>2026-01-12T00:00:00+01:00</published><updated>2026-01-12T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/12/gke-internal-external-urls-en</id><content type="html" xml:base="http://localhost:4000/2026/01/12/gke-internal-external-urls-en/"><![CDATA[<p>When designing an architecture in <strong>GCP with Kubernetes</strong>, one of the most important decisions is <strong>how to expose internal and external URLs without mixing responsibilities or compromising security</strong>.</p>
+<p>Si te interesa este tipo de arquitecturas, puedes ver más sobre mi experiencia o <a href="/es/contacto">contactarme</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Diseñar correctamente cómo exponer servicios internos y externos en Kubernetes es clave para mantener aislamiento, seguridad y claridad operativa en GCP.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/load-balancers.png" /><media:content medium="image" url="http://localhost:4000/assets/img/load-balancers.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Exposing Internal and External URLs in GKE Without Mixing Responsibilities</title><link href="http://localhost:4000/2026/01/12/gke-internal-external-urls-en/" rel="alternate" type="text/html" title="Exposing Internal and External URLs in GKE Without Mixing Responsibilities" /><published>2026-01-12T00:00:00+01:00</published><updated>2026-01-12T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/12/gke-internal-external-urls-en</id><content type="html" xml:base="http://localhost:4000/2026/01/12/gke-internal-external-urls-en/"><![CDATA[<p>When designing an architecture in <strong>GCP with Kubernetes</strong>, one of the most important decisions is <strong>how to expose internal and external URLs without mixing responsibilities or compromising security</strong>.</p>
 
 <p>This is not about “what works”, but about <strong>what mental model you want to enforce in your platform</strong>.</p>
 
@@ -536,87 +1342,7 @@ What changes is <strong>how</strong> traffic reaches them.</p>
 
 <p>Designing this separation correctly from the beginning reduces complexity, lowers operational risk, and makes the architecture much easier to reason about over time.</p>
 
-<p>If you are designing or evolving a GKE platform and want to discuss these patterns, you can <a href="/en/contact">contact me</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Designing how internal and external services are exposed in Kubernetes is key to preserving isolation, security, and operational clarity in GCP.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/load-balancers.png" /><media:content medium="image" url="http://localhost:4000/assets/img/load-balancers.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="es"><title type="html">Cilium en EKS vs GKE: por qué el networking en Kubernetes se siente más simple en GKE</title><link href="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks-es/" rel="alternate" type="text/html" title="Cilium en EKS vs GKE: por qué el networking en Kubernetes se siente más simple en GKE" /><published>2026-01-08T00:00:00+01:00</published><updated>2026-01-08T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks-es</id><content type="html" xml:base="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks-es/"><![CDATA[<p>Tras desplegar <strong>Cilium</strong> tanto en <strong>EKS</strong> como en <strong>GKE</strong>, hubo algo que se volvió muy evidente:</p>
-
-<p><strong>El networking es mucho más fácil de razonar en GKE.</strong></p>
-
-<p>No se trata de qué plataforma es “mejor”, sino de qué tan alineado está su modelo de red con la forma en la que Kubernetes fue diseñado originalmente.</p>
-
-<h2 id="el-networking-de-kubernetes-como-fue-concebido-gke">El networking de Kubernetes como fue concebido (GKE)</h2>
-
-<p>En GKE, el modelo de red de Kubernetes se siente natural y predecible. La mayoría de las cosas se comportan como esperas si entiendes los fundamentos de Kubernetes.</p>
-
-<p>Algunas características clave:</p>
-
-<ul>
-  <li>Los pods obtienen IPs desde <strong>rangos secundarios de la VPC</strong></li>
-  <li><strong>IPAM puede funcionar en modo <code class="language-plaintext highlighter-rouge">kubernetes</code></strong> sin fricción</li>
-  <li>Las IPs de los pods son <strong>ciudadanos de primera clase</strong> dentro de la VPC</li>
-  <li>La densidad de pods y el escalado son predecibles</li>
-  <li>Las funcionalidades avanzadas de Cilium funcionan con mínimos ajustes específicos de la plataforma</li>
-</ul>
-
-<p>Desde el punto de vista operativo, esto reduce mucho la carga mental. Piensas en términos de Kubernetes, no en limitaciones de infraestructura.</p>
-
-<h2 id="donde-eks-añade-fricción">Donde EKS añade fricción</h2>
-
-<p>EKS es una plataforma sólida, pero su networking está más acoplado a primitivas de infraestructura propias de AWS.</p>
-
-<p>En la práctica, esto introduce varias restricciones adicionales:</p>
-
-<ul>
-  <li>Las IPs de los pods están ligadas a <strong>ENIs</strong></li>
-  <li>El agotamiento de IPs requiere <strong>muchísima más planificación previa</strong></li>
-  <li>La densidad de pods depende del tipo de instancia EC2</li>
-  <li>Algunas funcionalidades de Cilium requieren cambiar el <strong>tipo de target del Load Balancer</strong> (instance vs IP)</li>
-  <li>El modelo mental pasa a ser <strong>infraestructura-céntrico</strong>, no Kubernetes-céntrico</li>
-</ul>
-
-<p>Nada de esto convierte a EKS en una mala plataforma. Pero sí implica que operar configuraciones avanzadas de red requiere un mayor conocimiento de los detalles internos de AWS y más disciplina operativa.</p>
-
-<h2 id="cilium-amplifica-las-diferencias">Cilium amplifica las diferencias</h2>
-
-<p>Cilium no es el problema. De hecho, funciona muy bien en ambas plataformas.</p>
-
-<p>Pero precisamente porque Cilium expone y se apoya en conceptos de networking nativos de Kubernetes, <strong>las diferencias entre plataformas se hacen más visibles</strong>:</p>
-
-<ul>
-  <li>En GKE, Cilium se siente como una extensión natural de la plataforma</li>
-  <li>En EKS, Cilium a menudo te obliga a revisar decisiones de red de bajo nivel</li>
-</ul>
-
-<p>Esto se nota especialmente cuando trabajas con:</p>
-<ul>
-  <li>Políticas FQDN</li>
-  <li>Control avanzado de egress</li>
-  <li>Integraciones con load balancers</li>
-  <li>Clústeres con alta densidad de pods</li>
-</ul>
-
-<h2 id="perspectiva-operativa">Perspectiva operativa</h2>
-
-<p>Desde el punto de vista de platform engineering, el soporte nativo de GKE para rangos secundarios elimina gran parte de la fricción operativa.</p>
-
-<p>Permite:</p>
-<ul>
-  <li>Escalar clústeres sin pensar constantemente en límites de IP</li>
-  <li>Aplicar políticas de red con menos sorpresas</li>
-  <li>Centrarse en abstracciones de Kubernetes en lugar de soluciones específicas del proveedor cloud</li>
-</ul>
-
-<p>En EKS, los mismos resultados son posibles, pero normalmente requieren <strong>más planificación, más restricciones y mayor disciplina operativa</strong>.</p>
-
-<h2 id="reflexión-final">Reflexión final</h2>
-
-<p>Esto no es un debate GKE vs EKS.</p>
-
-<p>Ambas plataformas están preparadas para producción y se usan ampliamente a gran escala.</p>
-
-<p>Pero si tu plataforma depende fuertemente de networking avanzado en Kubernetes, <strong>el modelo de red de GKE se siente más cercano a cómo Kubernetes quiere ser operado</strong>, y eso se traduce directamente en una menor carga cognitiva para los equipos de plataforma.</p>
-
-<p>A veces, menos sorpresas es la mejor característica.</p>
-
-<p>Si estás diseñando o evolucionando una plataforma Kubernetes y quieres comentar estos trade-offs, puedes <a href="/es/contact">contactar conmigo</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Tras desplegar Cilium tanto en EKS como en GKE, una diferencia quedó muy clara: el networking es significativamente más fácil de razonar en GKE.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://plus.unsplash.com/premium_photo-1744345196324-94c618a49bc3?q=80&amp;w=1770&amp;auto=format&amp;fit=crop&amp;ixlib=rb-4.1.0&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=800&amp;q=80" /><media:content medium="image" url="https://plus.unsplash.com/premium_photo-1744345196324-94c618a49bc3?q=80&amp;w=1770&amp;auto=format&amp;fit=crop&amp;ixlib=rb-4.1.0&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=800&amp;q=80" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Cilium on EKS vs GKE: why Kubernetes networking feels simpler on GKE</title><link href="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks/" rel="alternate" type="text/html" title="Cilium on EKS vs GKE: why Kubernetes networking feels simpler on GKE" /><published>2026-01-08T00:00:00+01:00</published><updated>2026-01-08T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks</id><content type="html" xml:base="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks/"><![CDATA[<p>After rolling out <strong>Cilium</strong> on both <strong>EKS</strong> and <strong>GKE</strong>, one thing became very clear to me:</p>
+<p>If you are designing or evolving a GKE platform and want to discuss these patterns, you can <a href="/en/contact">contact me</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Designing how internal and external services are exposed in Kubernetes is key to preserving isolation, security, and operational clarity in GCP.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/assets/img/load-balancers.png" /><media:content medium="image" url="http://localhost:4000/assets/img/load-balancers.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Cilium on EKS vs GKE: why Kubernetes networking feels simpler on GKE</title><link href="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks/" rel="alternate" type="text/html" title="Cilium on EKS vs GKE: why Kubernetes networking feels simpler on GKE" /><published>2026-01-08T00:00:00+01:00</published><updated>2026-01-08T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks</id><content type="html" xml:base="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks/"><![CDATA[<p>After rolling out <strong>Cilium</strong> on both <strong>EKS</strong> and <strong>GKE</strong>, one thing became very clear to me:</p>
 
 <p><strong>Networking is much easier to reason about on GKE.</strong></p>
 
@@ -696,4 +1422,84 @@ What changes is <strong>how</strong> traffic reaches them.</p>
 
 <p>Sometimes, fewer surprises is the biggest feature.</p>
 
-<p>If you’re designing or evolving a Kubernetes platform and want to discuss these trade-offs, feel free to <a href="/en/contact">get in touch</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[After rolling out Cilium on both EKS and GKE, one difference became very clear: networking is significantly easier to reason about on GKE.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://plus.unsplash.com/premium_photo-1744345196324-94c618a49bc3?q=80&amp;w=1770&amp;auto=format&amp;fit=crop&amp;ixlib=rb-4.1.0&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=800&amp;q=80" /><media:content medium="image" url="https://plus.unsplash.com/premium_photo-1744345196324-94c618a49bc3?q=80&amp;w=1770&amp;auto=format&amp;fit=crop&amp;ixlib=rb-4.1.0&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=800&amp;q=80" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+<p>If you’re interested in this kind of architecture, you can learn more about my experience or <a href="/en/contact">get in touch</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[After rolling out Cilium on both EKS and GKE, one difference became very clear: networking is significantly easier to reason about on GKE.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://plus.unsplash.com/premium_photo-1744345196324-94c618a49bc3?q=80&amp;w=1770&amp;auto=format&amp;fit=crop&amp;ixlib=rb-4.1.0&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=800&amp;q=80" /><media:content medium="image" url="https://plus.unsplash.com/premium_photo-1744345196324-94c618a49bc3?q=80&amp;w=1770&amp;auto=format&amp;fit=crop&amp;ixlib=rb-4.1.0&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=800&amp;q=80" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="es"><title type="html">Cilium en EKS vs GKE: por qué el networking en Kubernetes se siente más simple en GKE</title><link href="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks-es/" rel="alternate" type="text/html" title="Cilium en EKS vs GKE: por qué el networking en Kubernetes se siente más simple en GKE" /><published>2026-01-08T00:00:00+01:00</published><updated>2026-01-08T00:00:00+01:00</updated><id>http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks-es</id><content type="html" xml:base="http://localhost:4000/2026/01/08/cilium-networking-gke-vs-eks-es/"><![CDATA[<p>Tras desplegar <strong>Cilium</strong> tanto en <strong>EKS</strong> como en <strong>GKE</strong>, hubo algo que se volvió muy evidente:</p>
+
+<p><strong>El networking es mucho más fácil de razonar en GKE.</strong></p>
+
+<p>No se trata de qué plataforma es “mejor”, sino de qué tan alineado está su modelo de red con la forma en la que Kubernetes fue diseñado originalmente.</p>
+
+<h2 id="el-networking-de-kubernetes-como-fue-concebido-gke">El networking de Kubernetes como fue concebido (GKE)</h2>
+
+<p>En GKE, el modelo de red de Kubernetes se siente natural y predecible. La mayoría de las cosas se comportan como esperas si entiendes los fundamentos de Kubernetes.</p>
+
+<p>Algunas características clave:</p>
+
+<ul>
+  <li>Los pods obtienen IPs desde <strong>rangos secundarios de la VPC</strong></li>
+  <li><strong>IPAM puede funcionar en modo <code class="language-plaintext highlighter-rouge">kubernetes</code></strong> sin fricción</li>
+  <li>Las IPs de los pods son <strong>ciudadanos de primera clase</strong> dentro de la VPC</li>
+  <li>La densidad de pods y el escalado son predecibles</li>
+  <li>Las funcionalidades avanzadas de Cilium funcionan con mínimos ajustes específicos de la plataforma</li>
+</ul>
+
+<p>Desde el punto de vista operativo, esto reduce mucho la carga mental. Piensas en términos de Kubernetes, no en limitaciones de infraestructura.</p>
+
+<h2 id="donde-eks-añade-fricción">Donde EKS añade fricción</h2>
+
+<p>EKS es una plataforma sólida, pero su networking está más acoplado a primitivas de infraestructura propias de AWS.</p>
+
+<p>En la práctica, esto introduce varias restricciones adicionales:</p>
+
+<ul>
+  <li>Las IPs de los pods están ligadas a <strong>ENIs</strong></li>
+  <li>El agotamiento de IPs requiere <strong>muchísima más planificación previa</strong></li>
+  <li>La densidad de pods depende del tipo de instancia EC2</li>
+  <li>Algunas funcionalidades de Cilium requieren cambiar el <strong>tipo de target del Load Balancer</strong> (instance vs IP)</li>
+  <li>El modelo mental pasa a ser <strong>infraestructura-céntrico</strong>, no Kubernetes-céntrico</li>
+</ul>
+
+<p>Nada de esto convierte a EKS en una mala plataforma. Pero sí implica que operar configuraciones avanzadas de red requiere un mayor conocimiento de los detalles internos de AWS y más disciplina operativa.</p>
+
+<h2 id="cilium-amplifica-las-diferencias">Cilium amplifica las diferencias</h2>
+
+<p>Cilium no es el problema. De hecho, funciona muy bien en ambas plataformas.</p>
+
+<p>Pero precisamente porque Cilium expone y se apoya en conceptos de networking nativos de Kubernetes, <strong>las diferencias entre plataformas se hacen más visibles</strong>:</p>
+
+<ul>
+  <li>En GKE, Cilium se siente como una extensión natural de la plataforma</li>
+  <li>En EKS, Cilium a menudo te obliga a revisar decisiones de red de bajo nivel</li>
+</ul>
+
+<p>Esto se nota especialmente cuando trabajas con:</p>
+<ul>
+  <li>Políticas FQDN</li>
+  <li>Control avanzado de egress</li>
+  <li>Integraciones con load balancers</li>
+  <li>Clústeres con alta densidad de pods</li>
+</ul>
+
+<h2 id="perspectiva-operativa">Perspectiva operativa</h2>
+
+<p>Desde el punto de vista de platform engineering, el soporte nativo de GKE para rangos secundarios elimina gran parte de la fricción operativa.</p>
+
+<p>Permite:</p>
+<ul>
+  <li>Escalar clústeres sin pensar constantemente en límites de IP</li>
+  <li>Aplicar políticas de red con menos sorpresas</li>
+  <li>Centrarse en abstracciones de Kubernetes en lugar de soluciones específicas del proveedor cloud</li>
+</ul>
+
+<p>En EKS, los mismos resultados son posibles, pero normalmente requieren <strong>más planificación, más restricciones y mayor disciplina operativa</strong>.</p>
+
+<h2 id="reflexión-final">Reflexión final</h2>
+
+<p>Esto no es un debate GKE vs EKS.</p>
+
+<p>Ambas plataformas están preparadas para producción y se usan ampliamente a gran escala.</p>
+
+<p>Pero si tu plataforma depende fuertemente de networking avanzado en Kubernetes, <strong>el modelo de red de GKE se siente más cercano a cómo Kubernetes quiere ser operado</strong>, y eso se traduce directamente en una menor carga cognitiva para los equipos de plataforma.</p>
+
+<p>A veces, menos sorpresas es la mejor característica.</p>
+
+<p>Si te interesa este tipo de arquitecturas, puedes ver más sobre mi experiencia o <a href="/es/contacto">contactarme</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Tras desplegar Cilium tanto en EKS como en GKE, una diferencia quedó muy clara: el networking es significativamente más fácil de razonar en GKE.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://plus.unsplash.com/premium_photo-1744345196324-94c618a49bc3?q=80&amp;w=1770&amp;auto=format&amp;fit=crop&amp;ixlib=rb-4.1.0&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=800&amp;q=80" /><media:content medium="image" url="https://plus.unsplash.com/premium_photo-1744345196324-94c618a49bc3?q=80&amp;w=1770&amp;auto=format&amp;fit=crop&amp;ixlib=rb-4.1.0&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=800&amp;q=80" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
