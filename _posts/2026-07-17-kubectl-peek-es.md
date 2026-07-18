@@ -1,89 +1,88 @@
 ---
 layout: post
-title: "kubectl-peek: una forma sencilla de inspeccionar Secrets de Kubernetes y saber dónde se usan"
+title: "kubectl-peek: entiende las relaciones de los Secrets de Kubernetes desde la terminal"
 date: 2026-07-17
 lang: es
-image: https://github.com/user-attachments/assets/10a12751-2e9f-4231-b048-7ad610d9f4ff
-excerpt: "He creado kubectl-peek para consultar Secrets de Kubernetes de una forma más rápida, sencilla y útil, mostrando tanto sus valores decodificados como los workloads que los utilizan."
+image: https://github.com/user-attachments/assets/b13f3b4d-da5b-46ed-97bb-ba07d3001e61
+excerpt: "kubectl-peek es un plugin interactivo para kubectl que permite inspeccionar Secrets de Kubernetes, descubrir dónde se utilizan y ampliar el descubrimiento de relaciones a tus propios CRDs."
 ---
 
-Trabajar con Secrets de Kubernetes suele ser sencillo hasta que necesitas responder dos preguntas muy habituales:
+Trabajar con Secrets de Kubernetes es sencillo... hasta que necesitas responder preguntas como:
 
-**¿Qué contiene este Secret?**
+- **¿Qué contiene realmente este Secret?**
+- **¿Qué workloads lo están utilizando?**
+- **¿Ha sido generado por algún operador?**
+- **¿Puedo eliminarlo sin romper nada?**
 
-Y, todavía más importante:
+Responder a estas preguntas suele implicar varios comandos de `kubectl`, decodificar valores en Base64, buscar entre Deployments, Pods y manifiestos, e incluso revisar CRDs específicos de cada operador.
 
-**¿Dónde se está utilizando?**
+Quería una forma mucho más sencilla de hacerlo.
 
-El flujo habitual termina implicando varios comandos, decodificación manual de Base64, búsquedas entre Deployments y Pods, y revisión de manifiestos hasta entender finalmente la relación entre un Secret y los workloads que dependen de él.
+Por eso nació **kubectl-peek**.
 
-Por eso he creado **kubectl-peek**.
+`kubectl-peek` es una CLI interactiva y un plugin nativo de `kubectl` que permite inspeccionar Secrets y entender las relaciones que tienen con el resto de recursos del namespace, directamente desde la terminal.
 
-`kubectl-peek` es una pequeña CLI interactiva y un plugin nativo de `kubectl` pensado para facilitar la inspección de Secrets sin añadir complejidad al clúster.
+Sin controladores.
 
-## Por qué lo he creado
+Sin instalar nada dentro del clúster.
 
-Quería una herramienta que fuese deliberadamente simple:
+Sin interfaces web.
 
-- sin interfaz web
-- sin custom resources
-- sin controladores ejecutándose dentro del clúster
-- sin configuración adicional
-- sin bases de datos ni servicios externos
-- sin tener que copiar y decodificar valores manualmente
+Todo funciona utilizando el `kubeconfig`, el contexto y los permisos RBAC que ya tienes.
 
-La herramienta utiliza el kubeconfig, el contexto y el namespace que ya tienes configurados.
+---
 
-La ejecutas, seleccionas un Secret y puedes ver inmediatamente tanto su contenido decodificado como los workloads compatibles que lo referencian.
+# ¿Por qué lo he creado?
 
-## Qué hace kubectl-peek
+Mi objetivo era desarrollar una herramienta que siguiera siendo extremadamente simple, pero realmente útil en el trabajo diario de Platform Engineering.
 
-La herramienta ofrece un navegador interactivo de Secrets directamente desde la terminal.
+Quería algo que:
+
+- funcionase con cualquier clúster de Kubernetes
+- no necesitara instalar componentes adicionales
+- respetara el kubeconfig y el RBAC existentes
+- fuese lo bastante rápido como para formar parte del flujo habitual de trabajo
+
+En lugar de ir copiando nombres de Secrets entre comandos, decodificando valores y abriendo Deployments para buscar referencias, quería tener toda esa información reunida en una única vista.
+
+---
+
+# ¿Qué hace kubectl-peek?
+
+La herramienta proporciona un explorador interactivo de Secrets directamente desde la terminal.
 
 Permite:
 
-- explorar Secrets del namespace actual
-- navegar con el teclado
-- filtrar interactivamente pulsando `/`
-- aplicar un filtro inicial desde la línea de comandos
-- cambiar namespace, contexto o kubeconfig
-- mostrar los valores decodificados
-- descubrir dónde se utiliza el Secret seleccionado
+- explorar Secrets
+- filtrar de forma interactiva
+- inspeccionar valores decodificados
+- descubrir dónde se utiliza un Secret
+- detectar recursos que generan Secrets
+- ampliar el descubrimiento mediante reglas YAML para CRDs propios
+- utilizarlo tanto como `kubectl-peek` como mediante `kubectl peek`
 
-El mismo binario puede ejecutarse de estas dos formas:
+---
 
-```bash
-kubectl-peek
-```
+# Demo
 
-o como plugin nativo de `kubectl`:
+<img width="1200" height="700" alt="Demo de kubectl-peek" src="https://github.com/user-attachments/assets/b13f3b4d-da5b-46ed-97bb-ba07d3001e61" />
 
-```bash
-kubectl peek
-```
+El flujo de trabajo es deliberadamente sencillo:
 
-Ambos comandos ejecutan exactamente la misma funcionalidad.
+1. Ejecutar `kubectl-peek`
+2. Filtrar la lista de Secrets
+3. Abrir uno de ellos
+4. Revisar sus metadatos
+5. Consultar los valores decodificados
+6. Ver todos los recursos relacionados
 
-## Demo
+---
 
-<img width="1200" height="700" alt="demo de kubectl-peek" src="https://github.com/user-attachments/assets/10a12751-2e9f-4231-b048-7ad610d9f4ff" />
+# Descubrimiento integrado de relaciones
 
-La interacción está diseñada para ser mínima:
+Desde el primer momento, `kubectl-peek` detecta automáticamente referencias desde los recursos más habituales de Kubernetes.
 
-1. Ejecutar `kubectl peek`
-2. Navegar por la lista de Secrets
-3. Pulsar `/` para filtrar
-4. Escribir parte del nombre
-5. Pulsar `Enter`
-6. Revisar los metadatos, usos, keys y valores decodificados
-
-## Descubrimiento de usos con Used by
-
-Una de las funciones más útiles es la sección `Used by`.
-
-Al seleccionar un Secret, `kubectl-peek` busca en el namespace actual los workloads compatibles que lo referencian.
-
-La primera versión soporta:
+Actualmente soporta:
 
 - Pods
 - Deployments
@@ -91,189 +90,185 @@ La primera versión soporta:
 - DaemonSets
 - Jobs
 - CronJobs
+- ServiceAccounts
+- Ingresses
+- Gateways de Gateway API
 
 Detecta referencias mediante:
 
-- `env[].valueFrom.secretKeyRef`
-- `envFrom[].secretRef`
 - volúmenes basados en Secrets
+- projected Secret volumes
 - `imagePullSecrets`
+- variables de entorno
+- `envFrom`
 - init containers
 - ephemeral containers
+- certificados TLS de Gateway API
+- configuración TLS de Ingress
 
-Ejemplo de salida:
+Ejemplo:
 
 ```text
 Secret: database-credentials
-Namespace: default
-Type: Opaque
+
 Used by:
-  Deployment/backend
-    container/backend envFrom
-  CronJob/backup
-    container/backup env/BACKUP_PASSWORD -> password
 
-password:
-────────────────────────────────────────────────────────────
-example-password
+Deployment/backend
+  uses: container environment (container/backend envFrom)
 
-username:
-────────────────────────────────────────────────────────────
-database-user
+CronJob/backup
+  uses: container environment variable (container/backup env/BACKUP_PASSWORD -> password)
+
+Ingress/web
+  uses: TLS certificate (spec.tls[0].secretName)
 ```
 
-Esto resulta especialmente útil para comprobar si un Secret sigue referenciado, investigar un workload, revisar un namespace o preparar una rotación de credenciales.
+Esto facilita enormemente comprobar si un Secret sigue utilizándose antes de eliminarlo o rotarlo.
 
-## Instalación con Homebrew
+---
 
-La forma más sencilla de instalarlo en macOS es mediante Homebrew.
+# Descubre relaciones también en tus propios CRDs
 
-Añade el tap:
+La funcionalidad más reciente de `kubectl-peek` es el soporte para **descubrimiento personalizado de relaciones**.
+
+En lugar de incorporar soporte específico para cada operador de Kubernetes, la herramienta puede cargar reglas desde un sencillo fichero YAML.
+
+De esta forma puedes añadir soporte para recursos como:
+
+- External Secrets Operator
+- cert-manager
+- Crossplane
+- APIs internas de plataforma
+- cualquier CRD propio
+
+sin modificar una sola línea de código de la aplicación.
+
+Ejemplo:
+
+```yaml
+rules:
+  - apiVersions:
+      - external-secrets.io/v1
+      - external-secrets.io/v1beta1
+
+    kind: ExternalSecret
+    resource: externalsecrets
+
+    references:
+      - path: spec.target.name
+        relation: produces
+        description: generated Secret
+```
+
+Las reglas pueden cargarse puntualmente:
+
+```bash
+kubectl-peek --rules rules.yaml
+```
+
+o configurarse una única vez:
+
+```bash
+export KUBECTL_PEEK_RULE_FILE="$HOME/.config/kubectl-peek/rules.yaml"
+```
+
+Las relaciones descubiertas mediante reglas YAML se combinan automáticamente con el descubrimiento integrado.
+
+---
+
+# Instalación
+
+## Homebrew
 
 ```bash
 brew tap pierinho13/tools
-```
-
-Instala la herramienta:
-
-```bash
 brew install --cask kubectl-peek
 ```
 
-También puedes utilizar el nombre completo:
+---
 
-```bash
-brew install --cask pierinho13/tools/kubectl-peek
-```
-
-Para actualizarla posteriormente:
-
-```bash
-brew update
-brew upgrade --cask kubectl-peek
-```
-
-## Instalación desde GitHub Releases
+## GitHub Releases
 
 Se publican binarios precompilados para macOS, Linux y Windows.
 
-Descarga desde GitHub Releases el archivo correspondiente a tu sistema operativo y arquitectura, extráelo y mueve el binario a un directorio incluido en tu `PATH`.
+Solo tienes que descargar el archivo correspondiente, extraerlo y mover el binario a un directorio incluido en tu `PATH`.
 
-Ejemplo para macOS o Linux:
-
-```bash
-tar -xzf kubectl-peek_<version>_<os>_<arch>.tar.gz
-chmod +x kubectl-peek
-sudo mv kubectl-peek /usr/local/bin/
-```
-
-Comprueba la instalación:
-
-```bash
-kubectl-peek --help
-```
+---
 
 ## Compilar desde el código fuente
 
-También puedes compilarlo directamente con Go:
-
 ```bash
 git clone https://github.com/pierinho13/kubectl-peek.git
+
 cd kubectl-peek
+
 go build -o kubectl-peek .
 ```
 
-Mueve el binario a tu `PATH`:
+---
+
+# Uso básico
+
+Explorar Secrets:
 
 ```bash
-sudo mv kubectl-peek /usr/local/bin/
+kubectl-peek
 ```
 
-## Uso básico
-
-Explorar Secrets del namespace actual:
+Filtrar por nombre:
 
 ```bash
-kubectl peek
+kubectl-peek database
 ```
 
-Filtrar por nombre antes de abrir el selector interactivo:
+Usar otro namespace:
 
 ```bash
-kubectl peek database
+kubectl-peek -n staging
 ```
 
-Utilizar otro namespace:
+Usar un kubeconfig diferente:
 
 ```bash
-kubectl peek -n staging
+kubectl-peek --kubeconfig ~/.kube/config
 ```
 
-Utilizar otro contexto:
+Cargar reglas personalizadas:
 
 ```bash
-kubectl peek --context development-cluster
+kubectl-peek --rules rules.yaml
 ```
 
-Utilizar un kubeconfig específico:
+---
 
-```bash
-kubectl peek --kubeconfig ~/.kube/secondary-config
-```
+# Seguridad
 
-También puedes combinar todas las opciones:
+`kubectl-peek` muestra los valores decodificados de los Secrets directamente en la terminal.
 
-```bash
-kubectl peek database \
-  --namespace staging \
-  --context development-cluster \
-  --kubeconfig ~/.kube/secondary-config
-```
+Ten presente que esos valores pueden permanecer visibles en:
 
-## Permisos
+- el historial de la terminal
+- grabaciones de pantalla
+- capturas
+- sesiones compartidas
 
-La identidad actual de Kubernetes debe poder leer Secrets y listar los recursos compatibles en el namespace seleccionado.
+Debe utilizarse únicamente en entornos de confianza y con los permisos RBAC mínimos necesarios.
 
-Como mínimo, el acceso a Secrets requiere:
+---
 
-```yaml
-apiGroups:
-  - ""
-resources:
-  - secrets
-verbs:
-  - get
-  - list
-```
+# Conclusión
 
-La funcionalidad `Used by` necesita además permisos de listado sobre Pods, Deployments, StatefulSets, DaemonSets, Jobs y CronJobs.
+`kubectl-peek` comenzó como una pequeña utilidad para inspeccionar Secrets de forma más cómoda.
 
-## Consideraciones de seguridad
+Con el tiempo ha evolucionado hasta convertirse en una herramienta para responder una pregunta mucho más útil:
 
-`kubectl-peek` imprime los valores decodificados de los Secrets directamente en la terminal.
+> **"¿Qué relación tiene este Secret con el resto de recursos de mi clúster?"**
 
-Esos valores pueden permanecer visibles en:
+Ya sea un Secret consumido por un Deployment, generado por External Secrets Operator, producido por Crossplane o referenciado por cualquier CRD propio, `kubectl-peek` puede mostrar todas esas relaciones en una única vista.
 
-- el historial visual de la terminal
-- grabaciones de sesión
-- capturas de pantalla
-- sesiones de terminal compartidas
-- salida capturada por otros comandos
+El proyecto es completamente open source y está disponible en GitHub:
 
-La herramienta debe utilizarse únicamente en entornos de confianza y con los permisos mínimos necesarios.
+**https://github.com/pierinho13/kubectl-peek**
 
-## Conclusión
-
-`kubectl-peek` no pretende sustituir una plataforma completa de administración de Kubernetes.
-
-Su objetivo es mucho más concreto:
-
-**hacer que una tarea frecuente de Kubernetes sea más rápida, clara y fácil de utilizar.**
-
-Al combinar exploración interactiva, valores decodificados y descubrimiento de workloads en un solo comando, reduce el trabajo manual necesario durante las tareas habituales de plataforma.
-
-El proyecto es open source y está disponible en GitHub:
-
-[github.com/pierinho13/kubectl-peek](https://github.com/pierinho13/kubectl-peek)
 
 Si te interesa este tipo de trabajo de platform engineering, puedes conocer más sobre mi experiencia o [ponerte en contacto](/contact).
