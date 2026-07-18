@@ -34,7 +34,7 @@ Everything runs client-side using the kubeconfig you already have.
 
 ---
 
-# Why I built it
+## Why I built it
 
 My goal was to build something that stays intentionally small while still being genuinely useful during day-to-day platform engineering work.
 
@@ -49,7 +49,7 @@ Instead of copying Secret names into `kubectl get`, decoding values, opening Dep
 
 ---
 
-# What kubectl-peek does
+## What kubectl-peek does
 
 The tool provides an interactive Secret browser directly in your terminal.
 
@@ -65,7 +65,7 @@ You can:
 
 ---
 
-# Demo
+## Demo
 
 <img width="1200" height="700" alt="kubectl-peek demo" src="https://github.com/user-attachments/assets/b13f3b4d-da5b-46ed-97bb-ba07d3001e61" />
 
@@ -80,7 +80,7 @@ The workflow stays intentionally simple:
 
 ---
 
-# Built-in Secret discovery
+## Built-in Secret discovery
 
 Out of the box, `kubectl-peek` automatically discovers references from common Kubernetes resources.
 
@@ -129,7 +129,7 @@ This makes it much easier to understand whether a Secret is still referenced bef
 
 ---
 
-# Discover relationships in your own CRDs
+## Discover relationships in your own CRDs
 
 The newest feature is support for **custom Secret discovery**.
 
@@ -178,9 +178,9 @@ Built-in discovery and rule-based discovery are automatically combined.
 
 ---
 
-# Installation
+## Installation
 
-## Homebrew
+### Homebrew
 
 ```bash
 brew tap pierinho13/tools
@@ -189,13 +189,13 @@ brew install --cask kubectl-peek
 
 ---
 
-## GitHub Releases
+### GitHub Releases
 
 Download the appropriate archive from GitHub Releases, extract it and place the binary somewhere in your `PATH`.
 
 ---
 
-## Build from source
+### Build from source
 
 ```bash
 git clone https://github.com/pierinho13/kubectl-peek.git
@@ -207,7 +207,7 @@ go build -o kubectl-peek .
 
 ---
 
-# Basic usage
+## Basic usage
 
 Browse Secrets:
 
@@ -241,7 +241,7 @@ kubectl-peek --rules rules.yaml
 
 ---
 
-# Security
+## Security
 
 `kubectl-peek` displays decoded Secret values directly in your terminal.
 
@@ -256,7 +256,7 @@ Use it only with appropriate RBAC permissions and in trusted environments.
 
 ---
 
-# Final thoughts
+## Final thoughts
 
 `kubectl-peek` started as a small utility to inspect Secrets more comfortably.
 

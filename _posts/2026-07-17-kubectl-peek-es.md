@@ -32,7 +32,7 @@ Todo funciona utilizando el `kubeconfig`, el contexto y los permisos RBAC que ya
 
 ---
 
-# ¿Por qué lo he creado?
+## ¿Por qué lo he creado?
 
 Mi objetivo era desarrollar una herramienta que siguiera siendo extremadamente simple, pero realmente útil en el trabajo diario de Platform Engineering.
 
@@ -47,7 +47,7 @@ En lugar de ir copiando nombres de Secrets entre comandos, decodificando valores
 
 ---
 
-# ¿Qué hace kubectl-peek?
+## ¿Qué hace kubectl-peek?
 
 La herramienta proporciona un explorador interactivo de Secrets directamente desde la terminal.
 
@@ -63,7 +63,7 @@ Permite:
 
 ---
 
-# Demo
+## Demo
 
 <img width="1200" height="700" alt="Demo de kubectl-peek" src="https://github.com/user-attachments/assets/b13f3b4d-da5b-46ed-97bb-ba07d3001e61" />
 
@@ -78,7 +78,7 @@ El flujo de trabajo es deliberadamente sencillo:
 
 ---
 
-# Descubrimiento integrado de relaciones
+## Descubrimiento integrado de relaciones
 
 Desde el primer momento, `kubectl-peek` detecta automáticamente referencias desde los recursos más habituales de Kubernetes.
 
@@ -127,7 +127,7 @@ Esto facilita enormemente comprobar si un Secret sigue utilizándose antes de el
 
 ---
 
-# Descubre relaciones también en tus propios CRDs
+## Descubre relaciones también en tus propios CRDs
 
 La funcionalidad más reciente de `kubectl-peek` es el soporte para **descubrimiento personalizado de relaciones**.
 
@@ -176,7 +176,7 @@ Las relaciones descubiertas mediante reglas YAML se combinan automáticamente co
 
 ---
 
-# Instalación
+## Instalación
 
 ## Homebrew
 
@@ -207,7 +207,7 @@ go build -o kubectl-peek .
 
 ---
 
-# Uso básico
+## Uso básico
 
 Explorar Secrets:
 
@@ -241,7 +241,7 @@ kubectl-peek --rules rules.yaml
 
 ---
 
-# Seguridad
+## Seguridad
 
 `kubectl-peek` muestra los valores decodificados de los Secrets directamente en la terminal.
 
@@ -256,7 +256,7 @@ Debe utilizarse únicamente en entornos de confianza y con los permisos RBAC mí
 
 ---
 
-# Conclusión
+## Conclusión
 
 `kubectl-peek` comenzó como una pequeña utilidad para inspeccionar Secrets de forma más cómoda.
 
