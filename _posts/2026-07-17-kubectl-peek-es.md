@@ -3,47 +3,50 @@ layout: post
 title: "kubectl-peek: entiende las relaciones de los Secrets de Kubernetes desde la terminal"
 date: 2026-07-17
 lang: es
-image: https://github.com/user-attachments/assets/b13f3b4d-da5b-46ed-97bb-ba07d3001e61
-excerpt: "kubectl-peek es un plugin interactivo para kubectl que permite inspeccionar Secrets de Kubernetes, descubrir dónde se utilizan y ampliar el descubrimiento de relaciones a tus propios CRDs."
+image: https://github.com/user-attachments/assets/c6c5b2ac-0ea4-4774-8315-12021e88e829
+excerpt: "kubectl-peek es un plugin interactivo para kubectl que permite inspeccionar Secrets de Kubernetes, ocultar sus valores cuando sea necesario y descubrir los recursos que los usan, producen o referencian."
 ---
 
-Trabajar con Secrets de Kubernetes es sencillo... hasta que necesitas responder preguntas como:
+Trabajar con Secrets de Kubernetes es sencillo hasta que necesitas responder preguntas como:
 
 - **¿Qué contiene realmente este Secret?**
 - **¿Qué workloads lo están utilizando?**
 - **¿Ha sido generado por algún operador?**
 - **¿Puedo eliminarlo sin romper nada?**
 
-Responder a estas preguntas suele implicar varios comandos de `kubectl`, decodificar valores en Base64, buscar entre Deployments, Pods y manifiestos, e incluso revisar CRDs específicos de cada operador.
+Responder a estas preguntas suele implicar varios comandos de `kubectl`, decodificar valores en Base64, buscar entre manifiestos y revisar recursos personalizados uno por uno.
 
 Quería una forma mucho más sencilla de hacerlo.
 
 Por eso nació **kubectl-peek**.
 
-`kubectl-peek` es una CLI interactiva y un plugin nativo de `kubectl` que permite inspeccionar Secrets y entender las relaciones que tienen con el resto de recursos del namespace, directamente desde la terminal.
+`kubectl-peek` es una CLI interactiva y un plugin nativo de `kubectl` centrado en inspeccionar Secrets de Kubernetes y entender sus relaciones directamente desde la terminal.
 
 Sin controladores.
 
-Sin instalar nada dentro del clúster.
+Sin CRDs instalados por la herramienta.
 
-Sin interfaces web.
+Sin interfaz web.
 
-Todo funciona utilizando el `kubeconfig`, el contexto y los permisos RBAC que ya tienes.
+Sin componentes dentro del clúster.
+
+Todo funciona en local utilizando el `kubeconfig` y los permisos RBAC que ya tienes.
 
 ---
 
 ## ¿Por qué lo he creado?
 
-Mi objetivo era desarrollar una herramienta que siguiera siendo extremadamente simple, pero realmente útil en el trabajo diario de Platform Engineering.
+Mi objetivo era desarrollar una herramienta deliberadamente pequeña, pero realmente útil para el trabajo diario de Platform Engineering.
 
 Quería algo que:
 
 - funcionase con cualquier clúster de Kubernetes
-- no necesitara instalar componentes adicionales
-- respetara el kubeconfig y el RBAC existentes
-- fuese lo bastante rápido como para formar parte del flujo habitual de trabajo
+- no necesitase instalación dentro del clúster
+- respetase el kubeconfig y el RBAC existentes
+- mantuviese la inspección de Secrets rápida e interactiva
+- evitase llamadas adicionales a la API cuando no se necesita descubrir relaciones
 
-En lugar de ir copiando nombres de Secrets entre comandos, decodificando valores y abriendo Deployments para buscar referencias, quería tener toda esa información reunida en una única vista.
+En lugar de copiar nombres de Secrets entre comandos, decodificar valores manualmente, abrir manifiestos de workloads y buscar referencias entre operadores o CRDs, quería reunirlo todo en un único flujo.
 
 ---
 
@@ -53,36 +56,159 @@ La herramienta proporciona un explorador interactivo de Secrets directamente des
 
 Permite:
 
-- explorar Secrets
-- filtrar de forma interactiva
+- explorar Secrets de un namespace
+- filtrar la lista de forma interactiva
 - inspeccionar valores decodificados
-- descubrir dónde se utiliza un Secret
-- detectar recursos que generan Secrets
-- ampliar el descubrimiento mediante reglas YAML para CRDs propios
+- ocultar los valores cuando no deben mostrarse
+- descubrir recursos que utilizan un Secret
+- detectar recursos que producen o referencian un Secret
+- ampliar el descubrimiento a recursos personalizados mediante reglas YAML
 - utilizarlo tanto como `kubectl-peek` como mediante `kubectl peek`
+
+Por defecto, los valores del Secret se muestran y el descubrimiento de relaciones está desactivado.
+
+Esto mantiene la inspección habitual rápida y evita llamadas innecesarias a la API o avisos de permisos cuando solo necesitas consultar un Secret.
 
 ---
 
 ## Demo
 
-<img width="1200" height="700" alt="Demo de kubectl-peek" src="https://github.com/user-attachments/assets/b13f3b4d-da5b-46ed-97bb-ba07d3001e61" />
+<img width="1200" height="700" alt="Demo de inspección de Secrets con kubectl-peek" src="https://github.com/user-attachments/assets/c6c5b2ac-0ea4-4774-8315-12021e88e829" />
 
-El flujo de trabajo es deliberadamente sencillo:
+El flujo básico se mantiene deliberadamente sencillo:
 
-1. Ejecutar `kubectl-peek`
-2. Filtrar la lista de Secrets
-3. Abrir uno de ellos
+1. Ejecutar `kubectl-peek secret`
+2. Filtrar la lista
+3. Seleccionar un Secret
 4. Revisar sus metadatos
-5. Consultar los valores decodificados
-6. Ver todos los recursos relacionados
+5. Consultar sus valores decodificados u ocultos
+6. Activar el descubrimiento de relaciones solo cuando sea necesario
+
+Una segunda vista muestra el flujo de descubrimiento de relaciones:
+
+<img width="1200" height="700" alt="Demo del descubrimiento de relaciones de Secrets con kubectl-peek" src="https://github.com/user-attachments/assets/cc221426-06b2-4c7d-ab71-934b6b6e623f" />
 
 ---
 
-## Descubrimiento integrado de relaciones
+## Inspeccionar los valores de un Secret
 
-Desde el primer momento, `kubectl-peek` detecta automáticamente referencias desde los recursos más habituales de Kubernetes.
+Inicia el explorador interactivo con:
 
-Actualmente soporta:
+```bash
+kubectl-peek secret
+```
+
+o mediante el plugin nativo:
+
+```bash
+kubectl peek secret
+```
+
+Filtra por nombre:
+
+```bash
+kubectl-peek secret database
+```
+
+Utiliza otro namespace:
+
+```bash
+kubectl-peek secret database -n staging
+```
+
+Por defecto, los valores decodificados se muestran directamente en la terminal.
+
+Ejemplo:
+
+```text
+Secret: database-credentials
+Namespace: staging
+Type: Opaque
+
+password:
+────────────────────────────────────────────────────────────
+example-password
+```
+
+---
+
+## Ocultar los valores del Secret
+
+En algunos casos necesitas consultar los metadatos y las relaciones, pero no debes mostrar los valores reales.
+
+Utiliza:
+
+```bash
+kubectl-peek secret --show-values=false
+```
+
+El nombre de la clave continúa visible y el valor se sustituye por su tamaño en bytes:
+
+```text
+password:
+────────────────────────────────────────────────────────────
+<redacted: 24 bytes>
+```
+
+Esto resulta útil durante:
+
+- sesiones de pantalla compartida
+- grabaciones de terminal
+- capturas
+- demostraciones
+- troubleshooting colaborativo
+- entornos donde el contenido del Secret debe permanecer oculto
+
+---
+
+## El descubrimiento de relaciones es opcional
+
+El descubrimiento de relaciones está desactivado por defecto.
+
+Actívalo explícitamente con:
+
+```bash
+kubectl-peek secret --show-usage
+```
+
+Cuando está activado, `kubectl-peek` busca relaciones en recursos soportados de Kubernetes y en las reglas configuradas para recursos personalizados.
+
+Las relaciones pueden ser:
+
+- `uses`
+- `produces`
+- `references`
+
+Ejemplo:
+
+```text
+Secret: database-credentials
+Namespace: staging
+Type: Opaque
+Used by:
+  Deployment/backend
+    uses: container environment (container/backend envFrom)
+  CronJob/backup
+    uses: environment variable (container/backup env/BACKUP_PASSWORD -> password)
+```
+
+También puedes combinar el descubrimiento con la ocultación de valores:
+
+```bash
+kubectl-peek secret \
+  --show-usage \
+  --show-values=false
+```
+
+Así puedes consultar las dependencias sin imprimir información sensible.
+
+---
+
+## Descubrimiento integrado de Secrets
+
+Con `--show-usage`, `kubectl-peek` puede descubrir referencias desde recursos habituales de Kubernetes.
+
+Actualmente incluye recursos como:
 
 - Pods
 - Deployments
@@ -94,7 +220,7 @@ Actualmente soporta:
 - Ingresses
 - Gateways de Gateway API
 
-Detecta referencias mediante:
+Detecta referencias mediante campos como:
 
 - volúmenes basados en Secrets
 - projected Secret volumes
@@ -103,45 +229,51 @@ Detecta referencias mediante:
 - `envFrom`
 - init containers
 - ephemeral containers
-- certificados TLS de Gateway API
+- certificados de listeners de Gateway API
 - configuración TLS de Ingress
 
-Ejemplo:
-
-```text
-Secret: database-credentials
-
-Used by:
-
-Deployment/backend
-  uses: container environment (container/backend envFrom)
-
-CronJob/backup
-  uses: container environment variable (container/backup env/BACKUP_PASSWORD -> password)
-
-Ingress/web
-  uses: TLS certificate (spec.tls[0].secretName)
-```
-
-Esto facilita enormemente comprobar si un Secret sigue utilizándose antes de eliminarlo o rotarlo.
+Esto facilita comprobar si un Secret sigue estando referenciado antes de rotarlo o eliminarlo.
 
 ---
 
-## Descubre relaciones también en tus propios CRDs
+## Un mensaje más seguro cuando no se encuentra nada
 
-La funcionalidad más reciente de `kubectl-peek` es el soporte para **descubrimiento personalizado de relaciones**.
+Que no se encuentre una relación no significa que el Secret esté definitivamente sin uso.
 
-En lugar de incorporar soporte específico para cada operador de Kubernetes, la herramienta puede cargar reglas desde un sencillo fichero YAML.
+Cuando `--show-usage` está activado pero no se detecta ninguna referencia soportada, `kubectl-peek` muestra:
 
-De esta forma puedes añadir soporte para recursos como:
+```text
+Used by:
+  No references were found among the supported built-in resources and configured usage rules.
+  This does not guarantee that the Secret is unused; unsupported resources, external systems, or unconfigured custom resources may still reference it.
+```
+
+Esta distinción es importante porque el Secret todavía podría ser utilizado por:
+
+- un recurso de Kubernetes aún no soportado
+- un recurso personalizado sin una regla configurada
+- un sistema externo
+- una aplicación que obtiene el Secret dinámicamente
+- un recurso ubicado en otro namespace
+
+La salida aporta información sobre dependencias, pero no garantiza que eliminar el Secret sea seguro.
+
+---
+
+## Descubrir relaciones en recursos personalizados
+
+En lugar de incorporar soporte específico para cada operador de Kubernetes, `kubectl-peek` puede cargar reglas de relaciones desde un fichero YAML.
+
+Esto permite añadir soporte para recursos como:
 
 - External Secrets Operator
 - cert-manager
 - Crossplane
+- operadores de Vault
 - APIs internas de plataforma
-- cualquier CRD propio
+- CRDs privados
 
-sin modificar una sola línea de código de la aplicación.
+sin modificar la aplicación.
 
 Ejemplo:
 
@@ -150,58 +282,56 @@ rules:
   - apiVersions:
       - external-secrets.io/v1
       - external-secrets.io/v1beta1
-
     kind: ExternalSecret
     resource: externalsecrets
-
     references:
       - path: spec.target.name
         relation: produces
         description: generated Secret
 ```
 
-Las reglas pueden cargarse puntualmente:
+Carga el fichero de reglas explícitamente:
 
 ```bash
-kubectl-peek --rules rules.yaml
+kubectl-peek secret \
+  --show-usage \
+  --rules rules.yaml
 ```
 
-o configurarse una única vez:
+O configura una ruta por defecto:
 
 ```bash
 export KUBECTL_PEEK_RULE_FILE="$HOME/.config/kubectl-peek/rules.yaml"
 ```
 
-Las relaciones descubiertas mediante reglas YAML se combinan automáticamente con el descubrimiento integrado.
+Después ejecuta:
+
+```bash
+kubectl-peek secret --show-usage
+```
+
+Las relaciones integradas y las definidas mediante reglas YAML se combinan en la misma sección `Used by`.
 
 ---
 
 ## Instalación
 
-## Homebrew
+### Homebrew
 
 ```bash
 brew tap pierinho13/tools
 brew install --cask kubectl-peek
 ```
 
----
+### GitHub Releases
 
-## GitHub Releases
+Descarga el archivo correspondiente a tu sistema operativo y arquitectura, extráelo y coloca el binario en un directorio incluido en tu `PATH`.
 
-Se publican binarios precompilados para macOS, Linux y Windows.
-
-Solo tienes que descargar el archivo correspondiente, extraerlo y mover el binario a un directorio incluido en tu `PATH`.
-
----
-
-## Compilar desde el código fuente
+### Compilar desde el código fuente
 
 ```bash
 git clone https://github.com/pierinho13/kubectl-peek.git
-
 cd kubectl-peek
-
 go build -o kubectl-peek .
 ```
 
@@ -212,63 +342,119 @@ go build -o kubectl-peek .
 Explorar Secrets:
 
 ```bash
-kubectl-peek
+kubectl-peek secret
 ```
 
 Filtrar por nombre:
 
 ```bash
-kubectl-peek database
+kubectl-peek secret database
 ```
 
-Usar otro namespace:
+Utilizar otro namespace:
 
 ```bash
-kubectl-peek -n staging
+kubectl-peek secret -n staging
 ```
 
-Usar un kubeconfig diferente:
+Utilizar otro contexto:
 
 ```bash
-kubectl-peek --kubeconfig ~/.kube/config
+kubectl-peek secret --context production
+```
+
+Especificar otro kubeconfig:
+
+```bash
+kubectl-peek secret --kubeconfig ~/.kube/config
+```
+
+Descubrir relaciones:
+
+```bash
+kubectl-peek secret --show-usage
+```
+
+Ocultar valores:
+
+```bash
+kubectl-peek secret --show-values=false
 ```
 
 Cargar reglas personalizadas:
 
 ```bash
-kubectl-peek --rules rules.yaml
+kubectl-peek secret \
+  --show-usage \
+  --rules rules.yaml
 ```
+
+---
+
+## Permisos
+
+La inspección básica requiere permisos para leer Secrets en el namespace seleccionado.
+
+El descubrimiento de relaciones necesita permisos adicionales de tipo `list` sobre los recursos soportados o configurados que se quieran inspeccionar.
+
+Esto permite que:
+
+```bash
+kubectl-peek secret
+```
+
+siga siendo útil con un conjunto de permisos más reducido, mientras que:
+
+```bash
+kubectl-peek secret --show-usage
+```
+
+realiza la búsqueda más amplia únicamente cuando se solicita.
 
 ---
 
 ## Seguridad
 
-`kubectl-peek` muestra los valores decodificados de los Secrets directamente en la terminal.
+Los valores decodificados se muestran por defecto.
 
-Ten presente que esos valores pueden permanecer visibles en:
+Esos valores pueden permanecer visibles en:
 
-- el historial de la terminal
+- el scrollback de la terminal
 - grabaciones de pantalla
 - capturas
 - sesiones compartidas
+- salidas de comandos capturadas
 
-Debe utilizarse únicamente en entornos de confianza y con los permisos RBAC mínimos necesarios.
+Utiliza:
+
+```bash
+kubectl-peek secret --show-values=false
+```
+
+cuando los valores deban permanecer ocultos.
+
+La herramienta debe seguir utilizándose únicamente en entornos de confianza y con los permisos RBAC mínimos necesarios para cada tarea.
 
 ---
 
 ## Conclusión
 
-`kubectl-peek` comenzó como una pequeña utilidad para inspeccionar Secrets de forma más cómoda.
+`kubectl-peek` comenzó como una pequeña utilidad para inspeccionar Secrets de Kubernetes de forma más cómoda.
 
-Con el tiempo ha evolucionado hasta convertirse en una herramienta para responder una pregunta mucho más útil:
+Su objetivo es simplificar dos flujos relacionados:
 
-> **"¿Qué relación tiene este Secret con el resto de recursos de mi clúster?"**
+> **Inspeccionar qué contiene un Secret.**
 
-Ya sea un Secret consumido por un Deployment, generado por External Secrets Operator, producido por Crossplane o referenciado por cualquier CRD propio, `kubectl-peek` puede mostrar todas esas relaciones en una única vista.
+y:
 
-El proyecto es completamente open source y está disponible en GitHub:
+> **Entender qué recursos soportados lo utilizan, producen o referencian.**
+
+El modelo de relaciones es deliberadamente transparente. Los detectores integrados cubren recursos habituales de Kubernetes, las reglas YAML amplían el mismo mecanismo a recursos personalizados y una búsqueda vacía se presenta claramente como información incompleta, no como una garantía de que el Secret pueda eliminarse de forma segura.
+
+El proyecto es open source:
 
 **https://github.com/pierinho13/kubectl-peek**
 
+Las contribuciones, ideas y nuevas reglas de ejemplo son bienvenidas.
 
-Si te interesa este tipo de trabajo de platform engineering, puedes conocer más sobre mi experiencia o [ponerte en contacto](/contact).
+Si te interesa este tipo de trabajo de Platform Engineering, puedes conocer más sobre mi experiencia o [ponerte en contacto](/contact).
