@@ -84,9 +84,6 @@ The basic workflow stays intentionally simple:
 5. Review decoded or redacted values
 6. Enable relationship discovery only when needed
 
-A second view shows the relationship-discovery workflow:
-
-<img width="1200" height="700" alt="kubectl-peek Secret relationship discovery demo" src="https://github.com/user-attachments/assets/cc221426-06b2-4c7d-ab71-934b6b6e623f" />
 
 ---
 
@@ -261,6 +258,8 @@ The output is dependency information, not a deletion guarantee.
 ## Discover relationships in custom resources
 
 Instead of hardcoding every Kubernetes operator, `kubectl-peek` can load relationship rules from a YAML file.
+
+<img width="1200" height="700" alt="kubectl-peek Secret relationship discovery demo" src="https://github.com/user-attachments/assets/cc221426-06b2-4c7d-ab71-934b6b6e623f" />
 
 That makes it possible to support resources such as:
 

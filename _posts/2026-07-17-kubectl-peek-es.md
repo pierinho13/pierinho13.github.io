@@ -84,10 +84,6 @@ El flujo básico se mantiene deliberadamente sencillo:
 5. Consultar sus valores decodificados u ocultos
 6. Activar el descubrimiento de relaciones solo cuando sea necesario
 
-Una segunda vista muestra el flujo de descubrimiento de relaciones:
-
-<img width="1200" height="700" alt="Demo del descubrimiento de relaciones de Secrets con kubectl-peek" src="https://github.com/user-attachments/assets/cc221426-06b2-4c7d-ab71-934b6b6e623f" />
-
 ---
 
 ## Inspeccionar los valores de un Secret
@@ -263,6 +259,8 @@ La salida aporta información sobre dependencias, pero no garantiza que eliminar
 ## Descubrir relaciones en recursos personalizados
 
 En lugar de incorporar soporte específico para cada operador de Kubernetes, `kubectl-peek` puede cargar reglas de relaciones desde un fichero YAML.
+
+<img width="1200" height="700" alt="Demo del descubrimiento de relaciones de Secrets con kubectl-peek" src="https://github.com/user-attachments/assets/cc221426-06b2-4c7d-ab71-934b6b6e623f" />
 
 Esto permite añadir soporte para recursos como:
 
