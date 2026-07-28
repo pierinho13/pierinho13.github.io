@@ -2211,3 +2211,104 @@ a {
     transition: none;
   }
 }
+/* Compact homepage hero */
+@media (min-width: 981px) {
+  .hero-inner {
+    padding: 38px 0 18px;
+  }
+
+  .hero-grid {
+    grid-template-columns: minmax(0, 1.18fr) minmax(300px, 0.82fr);
+    align-items: center;
+    gap: 36px;
+  }
+
+  .hero-title {
+    max-width: 700px;
+    font-size: clamp(3rem, 4.7vw, 4.65rem);
+    line-height: 0.95;
+    letter-spacing: -0.055em;
+  }
+
+  .hero-description {
+    max-width: 620px;
+    margin-top: 16px;
+    line-height: 1.5;
+  }
+
+  .hero .button-row {
+    margin-top: 20px;
+  }
+
+  .hero-tags {
+    margin-top: 16px;
+  }
+
+  .hero-visual {
+    min-height: 300px;
+  }
+
+  .kube-scene {
+    width: min(100%, 350px);
+  }
+
+  .hero-visual::before {
+    width: 310px;
+    height: 310px;
+  }
+
+  .hero-visual::after {
+    width: 245px;
+    height: 245px;
+  }
+
+  .stats-bar {
+    margin-top: 24px;
+  }
+
+  .stat {
+    min-height: 74px;
+    padding: 14px 20px;
+  }
+}
+
+/* Additional compaction for laptop-height screens */
+@media (min-width: 981px) and (max-height: 900px) {
+  .hero-inner {
+    padding-top: 28px;
+  }
+
+  .hero-title {
+    max-width: 660px;
+    font-size: clamp(2.9rem, 4.25vw, 4.15rem);
+  }
+
+  .hero-description {
+    margin-top: 14px;
+    font-size: 1rem;
+  }
+
+  .hero .button-row {
+    margin-top: 17px;
+  }
+
+  .hero-tags {
+    margin-top: 14px;
+  }
+
+  .hero-visual {
+    min-height: 270px;
+  }
+
+  .kube-scene {
+    width: min(100%, 320px);
+  }
+
+  .stats-bar {
+    margin-top: 20px;
+  }
+}
+
+.terminal-showcase {
+  padding-top: clamp(48px, 6vw, 72px);
+}
