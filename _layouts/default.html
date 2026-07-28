@@ -52,12 +52,14 @@
           <ul>
             {% if current_lang == 'es' %}
               <li><a href="/es/" class="nav-link {% if page.url == '/es/' or page.url == '/es/index.html' %}active{% endif %}">Inicio</a></li>
+              <li><a href="/es/experiencia" class="nav-link {% if page.url contains '/es/experiencia' %}active{% endif %}">Experiencia</a></li>
               <li><a href="/es/blog" class="nav-link {% if page.url contains '/es/blog' or page.layout == 'post' and page.lang == 'es' %}active{% endif %}">Blog</a></li>
               <li><a href="/es/#projects" class="nav-link">Proyectos</a></li>
               <li><a href="/es/informacion" class="nav-link {% if page.url contains '/es/informacion' %}active{% endif %}">Sobre mí</a></li>
               <li><a href="/es/contacto" class="nav-link {% if page.url contains '/es/contacto' %}active{% endif %}">Contacto</a></li>
             {% else %}
               <li><a href="/en/" class="nav-link {% if page.url == '/en/' or page.url == '/en/index.html' %}active{% endif %}">Home</a></li>
+              <li><a href="/en/experience" class="nav-link {% if page.url contains '/en/experience' %}active{% endif %}">Experience</a></li>
               <li><a href="/en/blog" class="nav-link {% if page.url contains '/en/blog' or page.layout == 'post' and page.lang == 'en' %}active{% endif %}">Blog</a></li>
               <li><a href="/en/#projects" class="nav-link">Projects</a></li>
               <li><a href="/en/information" class="nav-link {% if page.url contains '/en/information' %}active{% endif %}">About</a></li>
