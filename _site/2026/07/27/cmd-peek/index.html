@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Platform Engineering, Kubernetes and Open Source Infrastructure Tooling">
+  <meta name="theme-color" content="#07142f">
+  <title>cmdpeek lets you discover terminal workflows without memorizing aliases · K8sReady</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%234f46e5'/%3E%3Ctext x='50' y='70' text-anchor='middle' font-size='62' fill='white'%3E%E2%98%B8%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <script>
+    (function () {
+      var storedTheme = localStorage.getItem('k8sready-theme');
+      if (storedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PPVYV3JC99"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-PPVYV3JC99');
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/en/" aria-label="K8sReady home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="3.2"></circle>
+            <path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"></path>
+          </svg>
+        </span>
+        <span class="brand-text">K8sReady</span>
+      </a>
+
+      <div class="header-actions">
+        <nav id="primary-navigation" class="primary-nav" aria-label="Primary navigation">
+          <ul>
+            
+              <li><a href="/en/" class="nav-link ">Home</a></li>
+              <li><a href="/en/blog" class="nav-link active">Blog</a></li>
+              <li><a href="/en/#projects" class="nav-link">Projects</a></li>
+              <li><a href="/en/information" class="nav-link ">About</a></li>
+              <li><a href="/en/contact" class="nav-link ">Contact</a></li>
+            
+          </ul>
+          <div class="language-switcher" aria-label="Language selector">
+            <a href="/es/" class="language-link ">🇪🇸 ES</a>
+            <a href="/en/" class="language-link active">🇬🇧 EN</a>
+          </div>
+        </nav>
+
+        <button class="icon-button" id="theme-toggle" type="button" aria-label="Toggle theme">
+          <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+          </svg>
+        </button>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Open menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 7h16M4 12h16M4 17h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" class="site-main">
+    
+      <div class="page-frame page-frame--wide">
+        <article class="blog-post">
+  <a href="/en/blog" class="back-link">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+    Back to blog
+  </a>
+
+  <header class="post-header">
+    <h1 class="post-title">cmdpeek lets you discover terminal workflows without memorizing aliases</h1>
+    <div class="post-meta">
+      <time datetime="2026-07-27T00:00:00+02:00">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>
+        July 27, 2026
+      </time>
+      <span class="reading-time">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+        
+        
+        
+        12 min read
+      </span>
+    </div>
+  </header>
+
+  
+    <div class="post-image"><img src="https://github.com/user-attachments/assets/afc4dbc5-904a-4005-b221-21bff9f7fae3" alt="cmdpeek lets you discover terminal workflows without memorizing aliases"></div>
+  
+
+  <div class="post-content"><p>Shell aliases are useful when you remember them.</p>
+
+<p>The problem starts when your collection grows large enough that you no longer remember:</p>
+
+<ul>
+  <li>the exact alias name</li>
+  <li>which aliases already exist</li>
+  <li>which one solves a specific problem</li>
+  <li>what arguments a command expects</li>
+  <li>whether a command is safe to run as-is</li>
+</ul>
+
+<p>At that point, aliases stop being a productivity tool and start becoming another thing you need to memorize.</p>
+
+<p>That is the problem I wanted to solve with <strong>cmdpeek</strong>.</p>
+
+<p><code class="language-plaintext highlighter-rouge">cmdpeek</code> is an open-source searchable command palette for reusable terminal workflows.</p>
+
+<p>Instead of remembering an exact alias such as:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>klo
+</code></pre></div></div>
+
+<p>you can search by what you want to do:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmdpeek kubernetes logs
+</code></pre></div></div>
+
+<p>The command does not need to match the internal name exactly.</p>
+
+<p><code class="language-plaintext highlighter-rouge">cmdpeek</code> searches across:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>title
+name
+description
+labels
+command contents
+</code></pre></div></div>
+
+<p>This means a workflow can be discovered using different words, old alias names, technical concepts, or even part of the underlying command.</p>
+
+<blockquote>
+  <p><strong>Aliases optimize commands you remember. cmdpeek helps you discover commands you do not.</strong></p>
+</blockquote>
+
+<hr />
+
+<h2 id="why-aliases-stop-scaling">Why aliases stop scaling</h2>
+
+<p>A small number of aliases is easy to manage:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">alias </span><span class="nv">k</span><span class="o">=</span><span class="s1">'kubectl'</span>
+<span class="nb">alias </span><span class="nv">kgp</span><span class="o">=</span><span class="s1">'kubectl get pods'</span>
+<span class="nb">alias </span><span class="nv">klo</span><span class="o">=</span><span class="s1">'kubectl logs -f'</span>
+</code></pre></div></div>
+
+<p>But over time, collections often grow into dozens or hundreds of entries covering Kubernetes, Flux, Git, GitHub Actions, AWS, Terraform, local development, troubleshooting, media conversion, and deployment workflows.</p>
+
+<p>The commands may still be useful, but remembering their names becomes difficult.</p>
+
+<p>You may know that you created something to download GitHub Actions logs, force a Flux HelmRelease reconciliation, switch Kubernetes context, inspect Elasticsearch shards, or convert a GIF into MP4.</p>
+
+<p>But you may not remember whether the alias was called:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ghlogs
+download-run
+gha-debug
+flux-force
+hr-reconcile
+gif2mp4
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">cmdpeek</code> removes that dependency on exact names.</p>
+
+<p>A command can include rich searchable metadata:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">force-reconcile-flux-helmrelease</span>
+  <span class="na">title</span><span class="pi">:</span> <span class="s">Force Flux HelmRelease reconciliation</span>
+  <span class="na">description</span><span class="pi">:</span> <span class="s">Select a namespace and HelmRelease, then force Flux to reconcile it with its source.</span>
+  <span class="na">labels</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">flux</span>
+    <span class="pi">-</span> <span class="s">fluxcd</span>
+    <span class="pi">-</span> <span class="s">helm</span>
+    <span class="pi">-</span> <span class="s">helmrelease</span>
+    <span class="pi">-</span> <span class="s">reconcile</span>
+    <span class="pi">-</span> <span class="s">force</span>
+    <span class="pi">-</span> <span class="s">kubernetes</span>
+    <span class="pi">-</span> <span class="s">gitops</span>
+    <span class="pi">-</span> <span class="s">troubleshooting</span>
+</code></pre></div></div>
+
+<p>That same command can be found with searches such as:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>flux force
+helm reconcile
+gitops troubleshooting
+helmrelease
+</code></pre></div></div>
+
+<p>Historical alias names can also remain as labels, so an existing mental shortcut still works without defining a separate shell alias.</p>
+
+<hr />
+
+<h2 id="search-by-intent">Search by intent</h2>
+
+<p>The main idea behind <code class="language-plaintext highlighter-rouge">cmdpeek</code> is simple:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Search by intent
+      ↓
+Select a workflow
+      ↓
+Resolve its variables
+      ↓
+Review the rendered command
+      ↓
+Confirm and execute
+</code></pre></div></div>
+
+<p>The catalog is defined in YAML, making workflows easy to review, version, share, and extend.</p>
+
+<p>A command can include:</p>
+
+<ul>
+  <li>a stable internal name</li>
+  <li>a human-readable title</li>
+  <li>a detailed description</li>
+  <li>searchable labels</li>
+  <li>a shell script</li>
+  <li>interactive variables</li>
+  <li>dynamic selectors generated by commands</li>
+</ul>
+
+<p>For example:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">pod-logs</span>
+  <span class="na">title</span><span class="pi">:</span> <span class="s">Follow Kubernetes pod logs</span>
+  <span class="na">description</span><span class="pi">:</span> <span class="s">Select a namespace and stream logs from one of its pods</span>
+  <span class="na">labels</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">kubernetes</span>
+    <span class="pi">-</span> <span class="s">pods</span>
+    <span class="pi">-</span> <span class="s">logs</span>
+    <span class="pi">-</span> <span class="s">troubleshooting</span>
+    <span class="pi">-</span> <span class="s">stream</span>
+    <span class="pi">-</span> <span class="s">klo</span>
+  <span class="na">run</span><span class="pi">:</span> <span class="s">kubectl logs -f "" -n ""</span>
+</code></pre></div></div>
+
+<p>This workflow can be found through:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pod logs
+kubernetes troubleshooting
+stream
+klo
+</code></pre></div></div>
+
+<p>The exact command name is no longer the only entry point.</p>
+
+<hr />
+
+<h2 id="demo-search-a-large-catalog">Demo: search a large catalog</h2>
+
+<p><img width="2800" height="1800" alt="cmdpeek-search-scroll-demo" src="https://github.com/user-attachments/assets/afc4dbc5-904a-4005-b221-21bff9f7fae3" /></p>
+
+<p>The interactive catalog supports:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/         Search
+↑ / ↓     Navigate
+← / →     Change page
+e         Open details
+Enter     Select
+q         Quit
+</code></pre></div></div>
+
+<p>Searches are ranked across the command metadata.</p>
+
+<p>Multiple terms can be combined:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>github logs
+production deploy
+elasticsearch size
+kubernetes context
+</code></pre></div></div>
+
+<p>A result can therefore match because of its title, description, labels, internal name, or script contents.</p>
+
+<p>This is especially useful for commands that are important but not used frequently enough to memorize.</p>
+
+<hr />
+
+<h2 id="start-with-a-search-directly-from-the-command-line">Start with a search directly from the command line</h2>
+
+<p>You can also pass search terms directly after <code class="language-plaintext highlighter-rouge">cmdpeek</code>:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmdpeek kubernetes context
+cmdpeek github logs
+cmdpeek elasticsearch shards
+</code></pre></div></div>
+
+<p>The arguments are joined into an initial search query.</p>
+
+<p>The behavior depends on the number of results:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>exact command name  → open that workflow directly
+one search result   → open that workflow directly
+multiple results    → show the interactive catalog already filtered
+no results          → show the catalog with no matching commands
+</code></pre></div></div>
+
+<p>This lets <code class="language-plaintext highlighter-rouge">cmdpeek</code> behave like a discoverable alias system.</p>
+
+<p>When you know roughly what you want, you can start with:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmdpeek elastic
+</code></pre></div></div>
+
+<p>instead of opening the full catalog and typing the filter manually.</p>
+
+<hr />
+
+<h2 id="demo-direct-search-and-automatic-selection">Demo: direct search and automatic selection</h2>
+
+<p><img width="1800" height="800" alt="cmdpeek-search-demo-filter" src="https://github.com/user-attachments/assets/ec0f0579-82d6-4d92-9e98-63ddb3161705" /></p>
+
+<p>When a search returns several workflows, <code class="language-plaintext highlighter-rouge">cmdpeek</code> opens the filtered list.</p>
+
+<p>When the search returns only one workflow, it skips the list and enters that command directly.</p>
+
+<p>For example:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmdpeek gif
+</code></pre></div></div>
+
+<p>may directly open a GIF-to-MP4 conversion workflow when it is the only matching command.</p>
+
+<p>This keeps the tool fast when you already know the intent, while preserving discovery when the query is broad.</p>
+
+<hr />
+
+<h2 id="interactive-variables-instead-of-fragile-aliases">Interactive variables instead of fragile aliases</h2>
+
+<p>Aliases become difficult to maintain when commands need parameters.</p>
+
+<p>A shell alias may work for a fixed command:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">alias </span><span class="nv">klo</span><span class="o">=</span><span class="s1">'kubectl logs -f'</span>
+</code></pre></div></div>
+
+<p>But real workflows usually need values such as namespace, pod, environment, branch, file path, HelmRelease, GitHub Actions URL, or commit message.</p>
+
+<p><code class="language-plaintext highlighter-rouge">cmdpeek</code> supports four variable sources:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Source</th>
+      <th>Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">input</code></td>
+      <td>Free-form user input</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">options</code></td>
+      <td>Static selectable values</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">environment</code></td>
+      <td>Initial value loaded from an environment variable</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">command</code></td>
+      <td>Options generated by a shell command</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A Kubernetes workflow can generate namespaces dynamically:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">variables</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">namespace</span>
+    <span class="na">prompt</span><span class="pi">:</span> <span class="s">Select Kubernetes namespace</span>
+    <span class="na">source</span><span class="pi">:</span>
+      <span class="na">type</span><span class="pi">:</span> <span class="s">command</span>
+      <span class="na">command</span><span class="pi">:</span> <span class="pi">&gt;-</span>
+        <span class="s">kubectl get namespaces</span>
+        <span class="s">-o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'</span>
+</code></pre></div></div>
+
+<p>A second variable can depend on the first:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">pod</span>
+    <span class="na">prompt</span><span class="pi">:</span> <span class="s">Select pod</span>
+    <span class="na">source</span><span class="pi">:</span>
+      <span class="na">type</span><span class="pi">:</span> <span class="s">command</span>
+      <span class="na">command</span><span class="pi">:</span> <span class="pi">&gt;-</span>
+        <span class="s">kubectl get pods -n ""</span>
+        <span class="s">-o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'</span>
+</code></pre></div></div>
+
+<p>This turns a command into a guided workflow rather than a string you need to remember and edit manually.</p>
+
+<hr />
+
+<h2 id="dynamic-selectors">Dynamic selectors</h2>
+
+<p>Command-generated variables are especially useful for DevOps workflows.</p>
+
+<p>They can list Kubernetes namespaces, pods, contexts, Flux HelmReleases, Git branches, AWS profiles, files, releases, or environments.</p>
+
+<p>For example, a Flux reconciliation workflow can first list namespaces and then list only the HelmReleases inside the selected namespace:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">variables</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">namespace</span>
+    <span class="na">prompt</span><span class="pi">:</span> <span class="s">Select Kubernetes namespace</span>
+    <span class="na">source</span><span class="pi">:</span>
+      <span class="na">type</span><span class="pi">:</span> <span class="s">command</span>
+      <span class="na">command</span><span class="pi">:</span> <span class="s">kubectl get namespaces -o name</span>
+
+  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">helmrelease</span>
+    <span class="na">prompt</span><span class="pi">:</span> <span class="s">Select Flux HelmRelease</span>
+    <span class="na">source</span><span class="pi">:</span>
+      <span class="na">type</span><span class="pi">:</span> <span class="s">command</span>
+      <span class="na">command</span><span class="pi">:</span> <span class="pi">&gt;-</span>
+        <span class="s">flux get helmreleases</span>
+        <span class="s">--namespace ""</span>
+        <span class="s">--no-header</span>
+        <span class="s">| awk '{print $1}'</span>
+</code></pre></div></div>
+
+<p>The user does not need to remember or type resource names manually.</p>
+
+<hr />
+
+<h2 id="preview-before-execution">Preview before execution</h2>
+
+<p>Variable values are inserted into the command preview as they are selected.</p>
+
+<p>Long commands and scripts remain scrollable, allowing the final result to be reviewed before execution.</p>
+
+<p>After all variables are resolved, <code class="language-plaintext highlighter-rouge">cmdpeek</code> displays the fully rendered command and requires explicit confirmation:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Execute this command?
+
+╭────────────────────────────────────────────╮
+│ flux reconcile helmrelease svc-time       │
+│   -n devbox-phoenix-2                     │
+│   --with-source                           │
+│   --force                                 │
+╰────────────────────────────────────────────╯
+
+y execute   n cancel   enter cancel
+</code></pre></div></div>
+
+<p>This is particularly useful for commands involving production environments, deployments, deletes, forced reconciliations, pushes, migrations, or infrastructure changes.</p>
+
+<p>The command remains visible before execution instead of being hidden behind an alias.</p>
+
+<hr />
+
+<h2 id="non-interactive-mode">Non-interactive mode</h2>
+
+<p>Interactive discovery is useful when you do not remember the exact workflow.</p>
+
+<p>But sometimes you already know the command name and want to reuse it from a shell function, a script, CI, documentation, or another tool.</p>
+
+<p>For those cases, <code class="language-plaintext highlighter-rouge">cmdpeek</code> also supports non-interactive execution:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmdpeek <span class="se">\</span>
+  <span class="nt">--no-interactive</span> <span class="se">\</span>
+  <span class="nt">--name</span> gcommit <span class="se">\</span>
+  <span class="nt">--set</span> <span class="s2">"message=Add non-interactive execution demo"</span>
+</code></pre></div></div>
+
+<p>Values can be supplied with repeatable <code class="language-plaintext highlighter-rouge">--set</code> flags:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmdpeek <span class="se">\</span>
+  <span class="nt">--no-interactive</span> <span class="se">\</span>
+  <span class="nt">--name</span> deploy <span class="se">\</span>
+  <span class="nt">--set</span> <span class="nv">environment</span><span class="o">=</span>staging <span class="se">\</span>
+  <span class="nt">--set</span> <span class="nv">version</span><span class="o">=</span>1.4.2
+</code></pre></div></div>
+
+<p>The same YAML catalog can therefore support both interactive discovery and scriptable execution.</p>
+
+<hr />
+
+<h2 id="demo-reuse-a-workflow-non-interactively">Demo: reuse a workflow non-interactively</h2>
+
+<p><img width="1800" height="800" alt="cmdpeek-non-interactive-gcommit" src="https://github.com/user-attachments/assets/bf6ea668-159a-4379-b0ed-fe233c17c92e" /></p>
+
+<p>This mode still renders the command and asks for confirmation unless <code class="language-plaintext highlighter-rouge">--yes</code> is provided.</p>
+
+<p>A dry run is also available:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmdpeek <span class="se">\</span>
+  <span class="nt">--no-interactive</span> <span class="se">\</span>
+  <span class="nt">--name</span> gcommit <span class="se">\</span>
+  <span class="nt">--set</span> <span class="s2">"message=Preview this commit"</span> <span class="se">\</span>
+  <span class="nt">--dry-run</span>
+</code></pre></div></div>
+
+<p>This prints the final command without executing it.</p>
+
+<hr />
+
+<h2 id="local-and-shared-catalogs">Local and shared catalogs</h2>
+
+<p>By default, <code class="language-plaintext highlighter-rouge">cmdpeek</code> looks for:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>.cmdpeek.yaml
+</code></pre></div></div>
+
+<p>A local path can be configured through:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">export </span><span class="nv">CMDPEEK_CONFIG_FILE</span><span class="o">=</span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/.config/cmdpeek/commands.yaml"</span>
+</code></pre></div></div>
+
+<p>Catalogs can also be loaded from GitHub:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">export </span><span class="nv">CMDPEEK_CONFIG_GITHUB</span><span class="o">=</span><span class="s2">"company/platform-config:cmdpeek/commands.yaml@main"</span>
+</code></pre></div></div>
+
+<p>For private repositories, authentication can be supplied through:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">export </span><span class="nv">CMDPEEK_GITHUB_TOKEN</span><span class="o">=</span><span class="s2">"github_pat_..."</span>
+</code></pre></div></div>
+
+<p>Remote configurations are cached locally and refreshed using GitHub ETags.</p>
+
+<p>This makes it possible to maintain a personal workflow catalog, a repository-specific catalog, a shared team catalog, or a versioned platform engineering catalog.</p>
+
+<p>The YAML file becomes executable documentation for workflows that would otherwise be scattered across aliases, shell history, snippets, and README files.</p>
+
+<hr />
+
+<h2 id="example-workflows">Example workflows</h2>
+
+<p>The same catalog can describe very different tasks.</p>
+
+<h3 id="analyze-github-actions-logs">Analyze GitHub Actions logs</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmdpeek github logs
+</code></pre></div></div>
+
+<p>The workflow can request a GitHub Actions run or job URL, download the logs, extract them, and prepare them for analysis.</p>
+
+<h3 id="force-a-flux-helmrelease-reconciliation">Force a Flux HelmRelease reconciliation</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmdpeek flux force
+</code></pre></div></div>
+
+<p>The workflow can interactively select a namespace and HelmRelease before running:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>flux reconcile helmrelease &lt;name&gt; <span class="se">\</span>
+  <span class="nt">--namespace</span> &lt;namespace&gt; <span class="se">\</span>
+  <span class="nt">--with-source</span> <span class="se">\</span>
+  <span class="nt">--force</span>
+</code></pre></div></div>
+
+<h3 id="switch-kubernetes-context">Switch Kubernetes context</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmdpeek kubernetes context
+</code></pre></div></div>
+
+<p>Available contexts can be generated dynamically from the current kubeconfig.</p>
+
+<h3 id="convert-gif-to-mp4">Convert GIF to MP4</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmdpeek gif mp4
+</code></pre></div></div>
+
+<p>The workflow can request input and output paths and execute a consistent <code class="language-plaintext highlighter-rouge">ffmpeg</code> conversion.</p>
+
+<h3 id="run-a-git-commit-workflow">Run a Git commit workflow</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmdpeek <span class="se">\</span>
+  <span class="nt">--no-interactive</span> <span class="se">\</span>
+  <span class="nt">--name</span> gcommit <span class="se">\</span>
+  <span class="nt">--set</span> <span class="s2">"message=Document cmdpeek workflows"</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="installation">Installation</h2>
+
+<h3 id="homebrew">Homebrew</h3>
+
+<p>Linux and macOS:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>brew tap pierinho13/tools
+brew <span class="nb">install</span> <span class="nt">--cask</span> cmdpeek
+</code></pre></div></div>
+
+<p>Upgrade:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>brew update
+brew upgrade <span class="nt">--cask</span> cmdpeek
+</code></pre></div></div>
+
+<h3 id="github-releases">GitHub Releases</h3>
+
+<p>Precompiled binaries are available through GitHub Releases.</p>
+
+<h3 id="build-from-source">Build from source</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/pierinho13/cmdpeek.git
+<span class="nb">cd </span>cmdpeek
+
+go build <span class="nt">-o</span> cmdpeek ./cmd/cmdpeek
+<span class="nb">sudo mv </span>cmdpeek /usr/local/bin/
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="quick-start">Quick start</h2>
+
+<p>Create <code class="language-plaintext highlighter-rouge">.cmdpeek.yaml</code>:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">version</span><span class="pi">:</span> <span class="m">1</span>
+<span class="na">shell</span><span class="pi">:</span> <span class="s">bash</span>
+
+<span class="na">commands</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">greet</span>
+    <span class="na">title</span><span class="pi">:</span> <span class="s">Greet a person</span>
+    <span class="na">description</span><span class="pi">:</span> <span class="s">Print a personalized greeting</span>
+    <span class="na">labels</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">example</span>
+      <span class="pi">-</span> <span class="s">greeting</span>
+      <span class="pi">-</span> <span class="s">hello</span>
+    <span class="na">run</span><span class="pi">:</span> <span class="pi">|</span>
+      <span class="s">name=""</span>
+      <span class="s">echo "Hello, ${name}!"</span>
+    <span class="na">variables</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">name</span>
+        <span class="na">prompt</span><span class="pi">:</span> <span class="s">Person name</span>
+        <span class="na">default</span><span class="pi">:</span> <span class="s">world</span>
+        <span class="na">source</span><span class="pi">:</span>
+          <span class="na">type</span><span class="pi">:</span> <span class="s">input</span>
+</code></pre></div></div>
+
+<p>Then run:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmdpeek
+</code></pre></div></div>
+
+<p>Or search directly:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmdpeek greeting
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="why-not-just-use-aliases-fzf-or-a-task-runner">Why not just use aliases, fzf, or a task runner?</h2>
+
+<p><code class="language-plaintext highlighter-rouge">cmdpeek</code> is not intended to replace every shell alias, fuzzy finder, or task runner.</p>
+
+<p>Aliases are still ideal for very short commands you use constantly and remember easily.</p>
+
+<p>Task runners are excellent for repository-defined build and automation tasks.</p>
+
+<p><code class="language-plaintext highlighter-rouge">fzf</code> is excellent for filtering arbitrary streams of text.</p>
+
+<p>The focus of <code class="language-plaintext highlighter-rouge">cmdpeek</code> is different:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>structured command discovery by intent
++
+guided variable resolution
++
+live preview
++
+safe execution
+</code></pre></div></div>
+
+<p>The searchable metadata belongs to the command model itself.</p>
+
+<p>A workflow is not just a command string. It has a title, description, labels, variables, and execution behavior.</p>
+
+<p>That makes it easier to discover months later, share with other people, and evolve without creating more aliases.</p>
+
+<hr />
+
+<h2 id="final-thoughts">Final thoughts</h2>
+
+<p>The main goal of <code class="language-plaintext highlighter-rouge">cmdpeek</code> is not simply to execute commands.</p>
+
+<p>The goal is to make useful terminal workflows discoverable.</p>
+
+<p>A command you cannot remember effectively does not exist when you need it.</p>
+
+<p>By searching names, titles, descriptions, labels, and command contents, <code class="language-plaintext highlighter-rouge">cmdpeek</code> makes it possible to find workflows using the words you remember at that moment.</p>
+
+<p>That is what makes it different from a large alias file.</p>
+
+<p>Instead of asking:</p>
+
+<blockquote>
+  <p>What did I call that alias?</p>
+</blockquote>
+
+<p>You can ask:</p>
+
+<blockquote>
+  <p>What do I want to do?</p>
+</blockquote>
+
+<p>The project is open source:</p>
+
+<p><strong>https://github.com/pierinho13/cmdpeek</strong></p>
+
+<p>Contributions, feedback, workflow examples, documentation improvements, tests, packaging support, and TUI ideas are very welcome.</p>
+
+<p>If you’re interested in this kind of platform engineering work, you can learn more about my experience or <a href="/en/contact">get in touch</a>.</p>
+</div>
+
+  <footer class="post-footer">
+    <a href="/en/blog" class="back-link-footer">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+      View more articles
+    </a>
+  </footer>
+</article>
+
+      </div>
+    
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="/en/">
+            <span class="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="3.2"></circle>
+                <path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"></path>
+              </svg>
+            </span>
+            <span class="brand-text">K8sReady</span>
+          </a>
+          <p>Kubernetes, Platform Engineering, Cloud Native and Open Source through articles, projects and real-world experience.</p>
+        </div>
+
+        <div>
+          <h2 class="footer-heading">Connect</h2>
+          <div class="social-row">
+            <a class="social-button" href="https://github.com/pierinho13" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .7a11.3 11.3 0 00-3.57 22.02c.57.1.78-.25.78-.55v-2.16c-3.18.69-3.85-1.35-3.85-1.35-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.75 2.68 1.25 3.33.95.1-.74.4-1.25.73-1.54-2.54-.29-5.21-1.27-5.21-5.59 0-1.24.44-2.25 1.17-3.04-.12-.29-.51-1.45.11-3 0 0 .95-.3 3.11 1.16A10.8 10.8 0 0112 6.03c.96 0 1.92.13 2.82.38 2.16-1.46 3.11-1.16 3.11-1.16.62 1.55.23 2.71.11 3 .73.79 1.17 1.8 1.17 3.04 0 4.33-2.68 5.3-5.23 5.58.41.35.78 1.05.78 2.12v3.18c0 .3.21.66.79.55A11.3 11.3 0 0012 .7z"/></svg>
+            </a>
+            <a class="social-button" href="https://www.linkedin.com/in/piero-rospigliosi-beltran-cv" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5A2.5 2.5 0 112.5 6a2.5 2.5 0 012.48-2.5zM2.84 8.98h4.28V21H2.84zM9.45 8.98h4.1v1.64h.06c.57-1.08 1.97-2.22 4.05-2.22 4.33 0 5.13 2.85 5.13 6.56V21h-4.27v-5.35c0-1.28-.02-2.92-1.78-2.92-1.78 0-2.05 1.39-2.05 2.82V21H9.45z"/></svg>
+            </a>
+            <a class="social-button" href="mailto:piero.rospigliosib@gmail.com" aria-label="Email">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg>
+            </a>
+          </div>
+        </div>
+
+        <div class="footer-cta">
+          <h2 class="footer-heading">Let's build something excellent</h2>
+          <p>Open to international Platform Engineering, Kubernetes and Cloud Architecture challenges.</p>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 Piero Rospigliosi Beltran · K8sReady</div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var menuButton = document.getElementById('menu-toggle');
+      var navigation = document.getElementById('primary-navigation');
+      var themeButton = document.getElementById('theme-toggle');
+
+      if (menuButton && navigation) {
+        menuButton.addEventListener('click', function () {
+          var isOpen = navigation.classList.toggle('is-open');
+          menuButton.setAttribute('aria-expanded', String(isOpen));
+        });
+        navigation.querySelectorAll('a').forEach(function (link) {
+          link.addEventListener('click', function () {
+            navigation.classList.remove('is-open');
+            menuButton.setAttribute('aria-expanded', 'false');
+          });
+        });
+      }
+
+      if (themeButton) {
+        themeButton.addEventListener('click', function () {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          if (dark) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('k8sready-theme', 'light');
+          } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('k8sready-theme', 'dark');
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+
+
+
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Platform Engineering, Kubernetes and Open Source Infrastructure Tooling">
+  <meta name="theme-color" content="#07142f">
+  <title>kubectl-peek: entiende las relaciones de los Secrets de Kubernetes desde la terminal · K8sReady</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%234f46e5'/%3E%3Ctext x='50' y='70' text-anchor='middle' font-size='62' fill='white'%3E%E2%98%B8%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <script>
+    (function () {
+      var storedTheme = localStorage.getItem('k8sready-theme');
+      if (storedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PPVYV3JC99"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-PPVYV3JC99');
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Saltar al contenido</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/es/" aria-label="K8sReady home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="3.2"></circle>
+            <path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"></path>
+          </svg>
+        </span>
+        <span class="brand-text">K8sReady</span>
+      </a>
+
+      <div class="header-actions">
+        <nav id="primary-navigation" class="primary-nav" aria-label="Navegación principal">
+          <ul>
+            
+              <li><a href="/es/" class="nav-link ">Inicio</a></li>
+              <li><a href="/es/blog" class="nav-link active">Blog</a></li>
+              <li><a href="/es/#projects" class="nav-link">Proyectos</a></li>
+              <li><a href="/es/informacion" class="nav-link ">Sobre mí</a></li>
+              <li><a href="/es/contacto" class="nav-link ">Contacto</a></li>
+            
+          </ul>
+          <div class="language-switcher" aria-label="Language selector">
+            <a href="/es/" class="language-link active">🇪🇸 ES</a>
+            <a href="/en/" class="language-link ">🇬🇧 EN</a>
+          </div>
+        </nav>
+
+        <button class="icon-button" id="theme-toggle" type="button" aria-label="Cambiar tema">
+          <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+          </svg>
+        </button>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Abrir menú">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 7h16M4 12h16M4 17h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" class="site-main">
+    
+      <div class="page-frame page-frame--wide">
+        <article class="blog-post">
+  <a href="/es/blog" class="back-link">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+    Volver al blog
+  </a>
+
+  <header class="post-header">
+    <h1 class="post-title">kubectl-peek: entiende las relaciones de los Secrets de Kubernetes desde la terminal</h1>
+    <div class="post-meta">
+      <time datetime="2026-07-17T00:00:00+02:00">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>
+        17/07/2026
+      </time>
+      <span class="reading-time">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+        
+        
+        
+        7 min de lectura
+      </span>
+    </div>
+  </header>
+
+  
+    <div class="post-image"><img src="https://github.com/user-attachments/assets/c6c5b2ac-0ea4-4774-8315-12021e88e829" alt="kubectl-peek: entiende las relaciones de los Secrets de Kubernetes desde la terminal"></div>
+  
+
+  <div class="post-content"><p>Trabajar con Secrets de Kubernetes es sencillo hasta que necesitas responder preguntas como:</p>
+
+<ul>
+  <li><strong>¿Qué contiene realmente este Secret?</strong></li>
+  <li><strong>¿Qué workloads lo están utilizando?</strong></li>
+  <li><strong>¿Ha sido generado por algún operador?</strong></li>
+  <li><strong>¿Puedo eliminarlo sin romper nada?</strong></li>
+</ul>
+
+<p>Responder a estas preguntas suele implicar varios comandos de <code class="language-plaintext highlighter-rouge">kubectl</code>, decodificar valores en Base64, buscar entre manifiestos y revisar recursos personalizados uno por uno.</p>
+
+<p>Quería una forma mucho más sencilla de hacerlo.</p>
+
+<p>Por eso nació <strong>kubectl-peek</strong>.</p>
+
+<p><code class="language-plaintext highlighter-rouge">kubectl-peek</code> es una CLI interactiva y un plugin nativo de <code class="language-plaintext highlighter-rouge">kubectl</code> centrado en inspeccionar Secrets de Kubernetes y entender sus relaciones directamente desde la terminal.</p>
+
+<p>Sin controladores.</p>
+
+<p>Sin CRDs instalados por la herramienta.</p>
+
+<p>Sin interfaz web.</p>
+
+<p>Sin componentes dentro del clúster.</p>
+
+<p>Todo funciona en local utilizando el <code class="language-plaintext highlighter-rouge">kubeconfig</code> y los permisos RBAC que ya tienes.</p>
+
+<hr />
+
+<h2 id="por-qué-lo-he-creado">¿Por qué lo he creado?</h2>
+
+<p>Mi objetivo era desarrollar una herramienta deliberadamente pequeña, pero realmente útil para el trabajo diario de Platform Engineering.</p>
+
+<p>Quería algo que:</p>
+
+<ul>
+  <li>funcionase con cualquier clúster de Kubernetes</li>
+  <li>no necesitase instalación dentro del clúster</li>
+  <li>respetase el kubeconfig y el RBAC existentes</li>
+  <li>mantuviese la inspección de Secrets rápida e interactiva</li>
+  <li>evitase llamadas adicionales a la API cuando no se necesita descubrir relaciones</li>
+</ul>
+
+<p>En lugar de copiar nombres de Secrets entre comandos, decodificar valores manualmente, abrir manifiestos de workloads y buscar referencias entre operadores o CRDs, quería reunirlo todo en un único flujo.</p>
+
+<hr />
+
+<h2 id="qué-hace-kubectl-peek">¿Qué hace kubectl-peek?</h2>
+
+<p>La herramienta proporciona un explorador interactivo de Secrets directamente desde la terminal.</p>
+
+<p>Permite:</p>
+
+<ul>
+  <li>explorar Secrets de un namespace</li>
+  <li>filtrar la lista de forma interactiva</li>
+  <li>inspeccionar valores decodificados</li>
+  <li>ocultar los valores cuando no deben mostrarse</li>
+  <li>descubrir recursos que utilizan un Secret</li>
+  <li>detectar recursos que producen o referencian un Secret</li>
+  <li>ampliar el descubrimiento a recursos personalizados mediante reglas YAML</li>
+  <li>utilizarlo tanto como <code class="language-plaintext highlighter-rouge">kubectl-peek</code> como mediante <code class="language-plaintext highlighter-rouge">kubectl peek</code></li>
+</ul>
+
+<p>Por defecto, los valores del Secret se muestran y el descubrimiento de relaciones está desactivado.</p>
+
+<p>Esto mantiene la inspección habitual rápida y evita llamadas innecesarias a la API o avisos de permisos cuando solo necesitas consultar un Secret.</p>
+
+<hr />
+
+<h2 id="demo">Demo</h2>
+
+<p><img width="1200" height="700" alt="Demo de inspección de Secrets con kubectl-peek" src="https://github.com/user-attachments/assets/c6c5b2ac-0ea4-4774-8315-12021e88e829" /></p>
+
+<p>El flujo básico se mantiene deliberadamente sencillo:</p>
+
+<ol>
+  <li>Ejecutar <code class="language-plaintext highlighter-rouge">kubectl-peek secret</code></li>
+  <li>Filtrar la lista</li>
+  <li>Seleccionar un Secret</li>
+  <li>Revisar sus metadatos</li>
+  <li>Consultar sus valores decodificados u ocultos</li>
+  <li>Activar el descubrimiento de relaciones solo cuando sea necesario</li>
+</ol>
+
+<hr />
+
+<h2 id="inspeccionar-los-valores-de-un-secret">Inspeccionar los valores de un Secret</h2>
+
+<p>Inicia el explorador interactivo con:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret
+</code></pre></div></div>
+
+<p>o mediante el plugin nativo:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl peek secret
+</code></pre></div></div>
+
+<p>Filtra por nombre:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret database
+</code></pre></div></div>
+
+<p>Utiliza otro namespace:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret database <span class="nt">-n</span> staging
+</code></pre></div></div>
+
+<p>Por defecto, los valores decodificados se muestran directamente en la terminal.</p>
+
+<p>Ejemplo:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Secret: database-credentials
+Namespace: staging
+Type: Opaque
+
+password:
+────────────────────────────────────────────────────────────
+example-password
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="ocultar-los-valores-del-secret">Ocultar los valores del Secret</h2>
+
+<p>En algunos casos necesitas consultar los metadatos y las relaciones, pero no debes mostrar los valores reales.</p>
+
+<p>Utiliza:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret <span class="nt">--show-values</span><span class="o">=</span><span class="nb">false</span>
+</code></pre></div></div>
+
+<p>El nombre de la clave continúa visible y el valor se sustituye por su tamaño en bytes:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>password:
+────────────────────────────────────────────────────────────
+&lt;redacted: 24 bytes&gt;
+</code></pre></div></div>
+
+<p>Esto resulta útil durante:</p>
+
+<ul>
+  <li>sesiones de pantalla compartida</li>
+  <li>grabaciones de terminal</li>
+  <li>capturas</li>
+  <li>demostraciones</li>
+  <li>troubleshooting colaborativo</li>
+  <li>entornos donde el contenido del Secret debe permanecer oculto</li>
+</ul>
+
+<hr />
+
+<h2 id="el-descubrimiento-de-relaciones-es-opcional">El descubrimiento de relaciones es opcional</h2>
+
+<p>El descubrimiento de relaciones está desactivado por defecto.</p>
+
+<p>Actívalo explícitamente con:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret <span class="nt">--show-usage</span>
+</code></pre></div></div>
+
+<p>Cuando está activado, <code class="language-plaintext highlighter-rouge">kubectl-peek</code> busca relaciones en recursos soportados de Kubernetes y en las reglas configuradas para recursos personalizados.</p>
+
+<p>Las relaciones pueden ser:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">uses</code></li>
+  <li><code class="language-plaintext highlighter-rouge">produces</code></li>
+  <li><code class="language-plaintext highlighter-rouge">references</code></li>
+</ul>
+
+<p>Ejemplo:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Secret: database-credentials
+Namespace: staging
+Type: Opaque
+Used by:
+  Deployment/backend
+    uses: container environment (container/backend envFrom)
+  CronJob/backup
+    uses: environment variable (container/backup env/BACKUP_PASSWORD -&gt; password)
+</code></pre></div></div>
+
+<p>También puedes combinar el descubrimiento con la ocultación de valores:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret <span class="se">\</span>
+  <span class="nt">--show-usage</span> <span class="se">\</span>
+  <span class="nt">--show-values</span><span class="o">=</span><span class="nb">false</span>
+</code></pre></div></div>
+
+<p>Así puedes consultar las dependencias sin imprimir información sensible.</p>
+
+<hr />
+
+<h2 id="descubrimiento-integrado-de-secrets">Descubrimiento integrado de Secrets</h2>
+
+<p>Con <code class="language-plaintext highlighter-rouge">--show-usage</code>, <code class="language-plaintext highlighter-rouge">kubectl-peek</code> puede descubrir referencias desde recursos habituales de Kubernetes.</p>
+
+<p>Actualmente incluye recursos como:</p>
+
+<ul>
+  <li>Pods</li>
+  <li>Deployments</li>
+  <li>StatefulSets</li>
+  <li>DaemonSets</li>
+  <li>Jobs</li>
+  <li>CronJobs</li>
+  <li>ServiceAccounts</li>
+  <li>Ingresses</li>
+  <li>Gateways de Gateway API</li>
+</ul>
+
+<p>Detecta referencias mediante campos como:</p>
+
+<ul>
+  <li>volúmenes basados en Secrets</li>
+  <li>projected Secret volumes</li>
+  <li><code class="language-plaintext highlighter-rouge">imagePullSecrets</code></li>
+  <li>variables de entorno</li>
+  <li><code class="language-plaintext highlighter-rouge">envFrom</code></li>
+  <li>init containers</li>
+  <li>ephemeral containers</li>
+  <li>certificados de listeners de Gateway API</li>
+  <li>configuración TLS de Ingress</li>
+</ul>
+
+<p>Esto facilita comprobar si un Secret sigue estando referenciado antes de rotarlo o eliminarlo.</p>
+
+<hr />
+
+<h2 id="un-mensaje-más-seguro-cuando-no-se-encuentra-nada">Un mensaje más seguro cuando no se encuentra nada</h2>
+
+<p>Que no se encuentre una relación no significa que el Secret esté definitivamente sin uso.</p>
+
+<p>Cuando <code class="language-plaintext highlighter-rouge">--show-usage</code> está activado pero no se detecta ninguna referencia soportada, <code class="language-plaintext highlighter-rouge">kubectl-peek</code> muestra:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Used by:
+  No references were found among the supported built-in resources and configured usage rules.
+  This does not guarantee that the Secret is unused; unsupported resources, external systems, or unconfigured custom resources may still reference it.
+</code></pre></div></div>
+
+<p>Esta distinción es importante porque el Secret todavía podría ser utilizado por:</p>
+
+<ul>
+  <li>un recurso de Kubernetes aún no soportado</li>
+  <li>un recurso personalizado sin una regla configurada</li>
+  <li>un sistema externo</li>
+  <li>una aplicación que obtiene el Secret dinámicamente</li>
+  <li>un recurso ubicado en otro namespace</li>
+</ul>
+
+<p>La salida aporta información sobre dependencias, pero no garantiza que eliminar el Secret sea seguro.</p>
+
+<hr />
+
+<h2 id="descubrir-relaciones-en-recursos-personalizados">Descubrir relaciones en recursos personalizados</h2>
+
+<p>En lugar de incorporar soporte específico para cada operador de Kubernetes, <code class="language-plaintext highlighter-rouge">kubectl-peek</code> puede cargar reglas de relaciones desde un fichero YAML.</p>
+
+<p><img width="1200" height="700" alt="Demo del descubrimiento de relaciones de Secrets con kubectl-peek" src="https://github.com/user-attachments/assets/cc221426-06b2-4c7d-ab71-934b6b6e623f" /></p>
+
+<p>Esto permite añadir soporte para recursos como:</p>
+
+<ul>
+  <li>External Secrets Operator</li>
+  <li>cert-manager</li>
+  <li>Crossplane</li>
+  <li>operadores de Vault</li>
+  <li>APIs internas de plataforma</li>
+  <li>CRDs privados</li>
+</ul>
+
+<p>sin modificar la aplicación.</p>
+
+<p>Ejemplo:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">rules</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="na">apiVersions</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">external-secrets.io/v1</span>
+      <span class="pi">-</span> <span class="s">external-secrets.io/v1beta1</span>
+    <span class="na">kind</span><span class="pi">:</span> <span class="s">ExternalSecret</span>
+    <span class="na">resource</span><span class="pi">:</span> <span class="s">externalsecrets</span>
+    <span class="na">references</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">path</span><span class="pi">:</span> <span class="s">spec.target.name</span>
+        <span class="na">relation</span><span class="pi">:</span> <span class="s">produces</span>
+        <span class="na">description</span><span class="pi">:</span> <span class="s">generated Secret</span>
+</code></pre></div></div>
+
+<p>Carga el fichero de reglas explícitamente:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret <span class="se">\</span>
+  <span class="nt">--show-usage</span> <span class="se">\</span>
+  <span class="nt">--rules</span> rules.yaml
+</code></pre></div></div>
+
+<p>O configura una ruta por defecto:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">export </span><span class="nv">KUBECTL_PEEK_RULE_FILE</span><span class="o">=</span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/.config/kubectl-peek/rules.yaml"</span>
+</code></pre></div></div>
+
+<p>Después ejecuta:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret <span class="nt">--show-usage</span>
+</code></pre></div></div>
+
+<p>Las relaciones integradas y las definidas mediante reglas YAML se combinan en la misma sección <code class="language-plaintext highlighter-rouge">Used by</code>.</p>
+
+<hr />
+
+<h2 id="instalación">Instalación</h2>
+
+<h3 id="homebrew">Homebrew</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>brew tap pierinho13/tools
+brew <span class="nb">install</span> <span class="nt">--cask</span> kubectl-peek
+</code></pre></div></div>
+
+<h3 id="github-releases">GitHub Releases</h3>
+
+<p>Descarga el archivo correspondiente a tu sistema operativo y arquitectura, extráelo y coloca el binario en un directorio incluido en tu <code class="language-plaintext highlighter-rouge">PATH</code>.</p>
+
+<h3 id="compilar-desde-el-código-fuente">Compilar desde el código fuente</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/pierinho13/kubectl-peek.git
+<span class="nb">cd </span>kubectl-peek
+go build <span class="nt">-o</span> kubectl-peek <span class="nb">.</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="uso-básico">Uso básico</h2>
+
+<p>Explorar Secrets:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret
+</code></pre></div></div>
+
+<p>Filtrar por nombre:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret database
+</code></pre></div></div>
+
+<p>Utilizar otro namespace:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret <span class="nt">-n</span> staging
+</code></pre></div></div>
+
+<p>Utilizar otro contexto:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret <span class="nt">--context</span> production
+</code></pre></div></div>
+
+<p>Especificar otro kubeconfig:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret <span class="nt">--kubeconfig</span> ~/.kube/config
+</code></pre></div></div>
+
+<p>Descubrir relaciones:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret <span class="nt">--show-usage</span>
+</code></pre></div></div>
+
+<p>Ocultar valores:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret <span class="nt">--show-values</span><span class="o">=</span><span class="nb">false</span>
+</code></pre></div></div>
+
+<p>Cargar reglas personalizadas:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret <span class="se">\</span>
+  <span class="nt">--show-usage</span> <span class="se">\</span>
+  <span class="nt">--rules</span> rules.yaml
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="permisos">Permisos</h2>
+
+<p>La inspección básica requiere permisos para leer Secrets en el namespace seleccionado.</p>
+
+<p>El descubrimiento de relaciones necesita permisos adicionales de tipo <code class="language-plaintext highlighter-rouge">list</code> sobre los recursos soportados o configurados que se quieran inspeccionar.</p>
+
+<p>Esto permite que:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret
+</code></pre></div></div>
+
+<p>siga siendo útil con un conjunto de permisos más reducido, mientras que:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret <span class="nt">--show-usage</span>
+</code></pre></div></div>
+
+<p>realiza la búsqueda más amplia únicamente cuando se solicita.</p>
+
+<hr />
+
+<h2 id="seguridad">Seguridad</h2>
+
+<p>Los valores decodificados se muestran por defecto.</p>
+
+<p>Esos valores pueden permanecer visibles en:</p>
+
+<ul>
+  <li>el scrollback de la terminal</li>
+  <li>grabaciones de pantalla</li>
+  <li>capturas</li>
+  <li>sesiones compartidas</li>
+  <li>salidas de comandos capturadas</li>
+</ul>
+
+<p>Utiliza:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret <span class="nt">--show-values</span><span class="o">=</span><span class="nb">false</span>
+</code></pre></div></div>
+
+<p>cuando los valores deban permanecer ocultos.</p>
+
+<p>La herramienta debe seguir utilizándose únicamente en entornos de confianza y con los permisos RBAC mínimos necesarios para cada tarea.</p>
+
+<hr />
+
+<h2 id="conclusión">Conclusión</h2>
+
+<p><code class="language-plaintext highlighter-rouge">kubectl-peek</code> comenzó como una pequeña utilidad para inspeccionar Secrets de Kubernetes de forma más cómoda.</p>
+
+<p>Su objetivo es simplificar dos flujos relacionados:</p>
+
+<blockquote>
+  <p><strong>Inspeccionar qué contiene un Secret.</strong></p>
+</blockquote>
+
+<p>y:</p>
+
+<blockquote>
+  <p><strong>Entender qué recursos soportados lo utilizan, producen o referencian.</strong></p>
+</blockquote>
+
+<p>El modelo de relaciones es deliberadamente transparente. Los detectores integrados cubren recursos habituales de Kubernetes, las reglas YAML amplían el mismo mecanismo a recursos personalizados y una búsqueda vacía se presenta claramente como información incompleta, no como una garantía de que el Secret pueda eliminarse de forma segura.</p>
+
+<p>El proyecto es open source:</p>
+
+<p><strong>https://github.com/pierinho13/kubectl-peek</strong></p>
+
+<p>Las contribuciones, ideas y nuevas reglas de ejemplo son bienvenidas.</p>
+
+<p>Si te interesa este tipo de trabajo de Platform Engineering, puedes conocer más sobre mi experiencia o <a href="/contact">ponerte en contacto</a>.</p>
+</div>
+
+  <footer class="post-footer">
+    <a href="/es/blog" class="back-link-footer">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+      Ver más artículos
+    </a>
+  </footer>
+</article>
+
+      </div>
+    
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="/es/">
+            <span class="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="3.2"></circle>
+                <path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"></path>
+              </svg>
+            </span>
+            <span class="brand-text">K8sReady</span>
+          </a>
+          <p>Kubernetes, Platform Engineering, Cloud Native y Open Source a través de artículos, proyectos y experiencias reales.</p>
+        </div>
+
+        <div>
+          <h2 class="footer-heading">Conecta</h2>
+          <div class="social-row">
+            <a class="social-button" href="https://github.com/pierinho13" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .7a11.3 11.3 0 00-3.57 22.02c.57.1.78-.25.78-.55v-2.16c-3.18.69-3.85-1.35-3.85-1.35-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.75 2.68 1.25 3.33.95.1-.74.4-1.25.73-1.54-2.54-.29-5.21-1.27-5.21-5.59 0-1.24.44-2.25 1.17-3.04-.12-.29-.51-1.45.11-3 0 0 .95-.3 3.11 1.16A10.8 10.8 0 0112 6.03c.96 0 1.92.13 2.82.38 2.16-1.46 3.11-1.16 3.11-1.16.62 1.55.23 2.71.11 3 .73.79 1.17 1.8 1.17 3.04 0 4.33-2.68 5.3-5.23 5.58.41.35.78 1.05.78 2.12v3.18c0 .3.21.66.79.55A11.3 11.3 0 0012 .7z"/></svg>
+            </a>
+            <a class="social-button" href="https://www.linkedin.com/in/piero-rospigliosi-beltran-cv" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5A2.5 2.5 0 112.5 6a2.5 2.5 0 012.48-2.5zM2.84 8.98h4.28V21H2.84zM9.45 8.98h4.1v1.64h.06c.57-1.08 1.97-2.22 4.05-2.22 4.33 0 5.13 2.85 5.13 6.56V21h-4.27v-5.35c0-1.28-.02-2.92-1.78-2.92-1.78 0-2.05 1.39-2.05 2.82V21H9.45z"/></svg>
+            </a>
+            <a class="social-button" href="mailto:piero.rospigliosib@gmail.com" aria-label="Email">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg>
+            </a>
+          </div>
+        </div>
+
+        <div class="footer-cta">
+          <h2 class="footer-heading">Construyamos algo excelente</h2>
+          <p>Abierto a retos internacionales de Platform Engineering, Kubernetes y Cloud Architecture.</p>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 Piero Rospigliosi Beltran · K8sReady</div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var menuButton = document.getElementById('menu-toggle');
+      var navigation = document.getElementById('primary-navigation');
+      var themeButton = document.getElementById('theme-toggle');
+
+      if (menuButton && navigation) {
+        menuButton.addEventListener('click', function () {
+          var isOpen = navigation.classList.toggle('is-open');
+          menuButton.setAttribute('aria-expanded', String(isOpen));
+        });
+        navigation.querySelectorAll('a').forEach(function (link) {
+          link.addEventListener('click', function () {
+            navigation.classList.remove('is-open');
+            menuButton.setAttribute('aria-expanded', 'false');
+          });
+        });
+      }
+
+      if (themeButton) {
+        themeButton.addEventListener('click', function () {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          if (dark) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('k8sready-theme', 'light');
+          } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('k8sready-theme', 'dark');
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

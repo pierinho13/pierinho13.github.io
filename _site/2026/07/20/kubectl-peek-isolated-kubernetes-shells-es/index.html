@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+
+
+
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Platform Engineering, Kubernetes and Open Source Infrastructure Tooling">
+  <meta name="theme-color" content="#07142f">
+  <title>kubectl-peek ahora abre shells aisladas de Kubernetes para cualquier contexto y namespace · K8sReady</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%234f46e5'/%3E%3Ctext x='50' y='70' text-anchor='middle' font-size='62' fill='white'%3E%E2%98%B8%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <script>
+    (function () {
+      var storedTheme = localStorage.getItem('k8sready-theme');
+      if (storedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PPVYV3JC99"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-PPVYV3JC99');
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Saltar al contenido</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/es/" aria-label="K8sReady home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="3.2"></circle>
+            <path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"></path>
+          </svg>
+        </span>
+        <span class="brand-text">K8sReady</span>
+      </a>
+
+      <div class="header-actions">
+        <nav id="primary-navigation" class="primary-nav" aria-label="Navegación principal">
+          <ul>
+            
+              <li><a href="/es/" class="nav-link ">Inicio</a></li>
+              <li><a href="/es/blog" class="nav-link active">Blog</a></li>
+              <li><a href="/es/#projects" class="nav-link">Proyectos</a></li>
+              <li><a href="/es/informacion" class="nav-link ">Sobre mí</a></li>
+              <li><a href="/es/contacto" class="nav-link ">Contacto</a></li>
+            
+          </ul>
+          <div class="language-switcher" aria-label="Language selector">
+            <a href="/es/" class="language-link active">🇪🇸 ES</a>
+            <a href="/en/" class="language-link ">🇬🇧 EN</a>
+          </div>
+        </nav>
+
+        <button class="icon-button" id="theme-toggle" type="button" aria-label="Cambiar tema">
+          <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+          </svg>
+        </button>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Abrir menú">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 7h16M4 12h16M4 17h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" class="site-main">
+    
+      <div class="page-frame page-frame--wide">
+        <article class="blog-post">
+  <a href="/es/blog" class="back-link">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+    Volver al blog
+  </a>
+
+  <header class="post-header">
+    <h1 class="post-title">kubectl-peek ahora abre shells aisladas de Kubernetes para cualquier contexto y namespace</h1>
+    <div class="post-meta">
+      <time datetime="2026-07-20T00:00:00+02:00">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>
+        20/07/2026
+      </time>
+      <span class="reading-time">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+        
+        
+        
+        9 min de lectura
+      </span>
+    </div>
+  </header>
+
+  
+    <div class="post-image"><img src="https://github.com/user-attachments/assets/9eb0f303-cc02-4cc2-b434-ead0ceb10c35" alt="kubectl-peek ahora abre shells aisladas de Kubernetes para cualquier contexto y namespace"></div>
+  
+
+  <div class="post-content"><p>Cambiar entre clusters y namespaces de Kubernetes es una de esas tareas pequeñas que acaba consumiendo bastante tiempo cuando se repite durante todo el día.</p>
+
+<p>Un flujo habitual suele ser así:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl config use-context staging
+kubectl config set-context <span class="nt">--current</span> <span class="nt">--namespace</span> payments
+kubectl get pods
+</code></pre></div></div>
+
+<p>Y unos minutos después:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl config use-context production
+kubectl config set-context <span class="nt">--current</span> <span class="nt">--namespace</span> payments
+kubectl get pods
+</code></pre></div></div>
+
+<p>Esto funciona, pero también modifica el estado real de tu kubeconfig.</p>
+
+<p>Y eso genera varios problemas muy comunes:</p>
+
+<ul>
+  <li>olvidas qué contexto está activo</li>
+  <li>una terminal nueva hereda un contexto cambiado en otro momento</li>
+  <li>tienes que pasar <code class="language-plaintext highlighter-rouge">--context</code> y <code class="language-plaintext highlighter-rouge">--namespace</code> en cada comando</li>
+  <li>corres el riesgo de ejecutar una acción contra el cluster equivocado</li>
+  <li>trabajar en paralelo con varios entornos resulta incómodo</li>
+  <li>herramientas como Helm y Flux necesitan que repitas el mismo alcance</li>
+</ul>
+
+<p>La nueva versión de <strong>kubectl-peek</strong> soluciona este problema mediante shells aisladas de Kubernetes.</p>
+
+<p>Ahora puedes seleccionar un contexto y un namespace, abrir una shell temporal limitada a ambos, trabajar con normalidad y regresar a tu entorno original ejecutando simplemente:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">exit</span>
+</code></pre></div></div>
+
+<p>Sin cambiar permanentemente el contexto.</p>
+
+<p>Sin modificar el kubeconfig original.</p>
+
+<p>Sin repetir flags en cada comando.</p>
+
+<hr />
+
+<h2 id="kubectl-peek-está-evolucionando-hacia-una-cli-de-productividad-para-kubernetes">kubectl-peek está evolucionando hacia una CLI de productividad para Kubernetes</h2>
+
+<p><code class="language-plaintext highlighter-rouge">kubectl-peek</code> nació inicialmente como una forma interactiva de inspeccionar Secrets de Kubernetes y descubrir qué recursos los usan, producen o referencian.</p>
+
+<p>Esa funcionalidad sigue disponible mediante:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret
+</code></pre></div></div>
+
+<p>Pero el proyecto ahora cubre varios flujos de Kubernetes como funcionalidades principales:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek
+├── secret       Inspecciona Secrets y sus relaciones
+├── namespace    Selecciona y guarda un namespace
+└── shell        Abre una shell aislada por contexto y namespace
+</code></pre></div></div>
+
+<p>Al ejecutar el comando raíz se muestran todos los flujos disponibles:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek
+</code></pre></div></div>
+
+<p>Los mismos comandos también funcionan como plugin nativo de <code class="language-plaintext highlighter-rouge">kubectl</code>:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl peek secret
+kubectl peek namespace
+kubectl peek shell
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="el-problema-habitual-cambiar-de-contexto-modifica-un-estado-compartido">El problema habitual: cambiar de contexto modifica un estado compartido</h2>
+
+<p>Los contextos de Kubernetes son útiles porque combinan:</p>
+
+<ul>
+  <li>un cluster</li>
+  <li>unas credenciales</li>
+  <li>un namespace predeterminado</li>
+</ul>
+
+<p>Pero cambiar el contexto activo también modifica el estado utilizado por tu terminal normal.</p>
+
+<p>Por ejemplo:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl config use-context production
+</code></pre></div></div>
+
+<p>A partir de ese momento, todos los comandos que usen el kubeconfig predeterminado apuntarán a producción, salvo que indiques explícitamente otro contexto.</p>
+
+<p>Lo mismo ocurre con los namespaces:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl config set-context <span class="nt">--current</span> <span class="nt">--namespace</span> payments
+</code></pre></div></div>
+
+<p>Esto resulta especialmente incómodo cuando necesitas comparar entornos o trabajar con varios clusters al mismo tiempo.</p>
+
+<p>Puedes evitar cambiar el contexto pasando flags:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl   <span class="nt">--context</span> production   <span class="nt">--namespace</span> payments   get pods
+</code></pre></div></div>
+
+<p>Pero entonces cada comando se vuelve repetitivo:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl <span class="nt">--context</span> production <span class="nt">-n</span> payments get pods
+helm <span class="nt">--kube-context</span> production <span class="nt">-n</span> payments list
+flux <span class="nt">--context</span> production <span class="nt">-n</span> payments get all
+</code></pre></div></div>
+
+<p>El flujo de shells aisladas ofrece la comodidad de tener un contexto y namespace seleccionados sin modificar tu kubeconfig real.</p>
+
+<hr />
+
+<h2 id="abrir-una-shell-aislada-de-kubernetes">Abrir una shell aislada de Kubernetes</h2>
+
+<p>Ejecuta:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek shell
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">kubectl-peek</code> hará lo siguiente:</p>
+
+<ol>
+  <li>listará los contextos disponibles en tu kubeconfig</li>
+  <li>permitirá seleccionar uno de forma interactiva</li>
+  <li>se conectará utilizando ese contexto</li>
+  <li>listará los namespaces disponibles en ese cluster</li>
+  <li>permitirá seleccionar un namespace</li>
+  <li>creará un kubeconfig temporal</li>
+  <li>abrirá una shell hija utilizando esa configuración temporal</li>
+</ol>
+
+<p>El flujo completo es:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Seleccionar un contexto de Kubernetes
+                 │
+                 ▼
+Listar los namespaces disponibles en ese contexto
+                 │
+                 ▼
+Seleccionar un namespace
+                 │
+                 ▼
+Crear un kubeconfig temporal
+                 │
+                 ▼
+Abrir una shell aislada
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="demostración">Demostración</h2>
+
+<p><img width="1800" height="800" alt="Demostración de shell aislada de Kubernetes con kubectl-peek" src="https://github.com/user-attachments/assets/9eb0f303-cc02-4cc2-b434-ead0ceb10c35" /></p>
+
+<p>Dentro de la shell hija, el contexto y el namespace seleccionados permanecen visibles en el prompt:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[k8s:production ns:payments] piero@MacBook-Pro %
+</code></pre></div></div>
+
+<p>El contexto se muestra en cian y el namespace en amarillo en terminales compatibles con colores ANSI.</p>
+
+<p>Ese pequeño indicador visual supone una gran diferencia cuando tienes varias terminales abiertas al mismo tiempo.</p>
+
+<hr />
+
+<h2 id="evitar-los-selectores-cuando-ya-conoces-el-destino">Evitar los selectores cuando ya conoces el destino</h2>
+
+<p>Puedes indicar directamente el contexto:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek shell <span class="nt">--context</span> production
+</code></pre></div></div>
+
+<p>En ese caso, solo se mostrará el selector de namespaces.</p>
+
+<p>También puedes indicar directamente el namespace:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek shell <span class="nt">-n</span> payments
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">kubectl-peek</code> solicitará el contexto y comprobará que el namespace exista en el cluster seleccionado.</p>
+
+<p>Para evitar ambos selectores:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek shell   <span class="nt">--context</span> production   <span class="nt">--namespace</span> payments
+</code></pre></div></div>
+
+<p>Esto resulta útil para aliases, documentación, scripts o entornos que utilizas frecuentemente.</p>
+
+<hr />
+
+<h2 id="trabajar-con-normalidad-dentro-de-la-shell">Trabajar con normalidad dentro de la shell</h2>
+
+<p>Una vez abierta la shell aislada, puedes utilizar tus herramientas habituales de Kubernetes sin repetir el contexto ni el namespace:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl get pods
+kubectl get services
+kubectl describe deployment api
+helm list
+flux get all
+</code></pre></div></div>
+
+<p>Todos esos comandos utilizan el kubeconfig temporal expuesto a la shell hija mediante <code class="language-plaintext highlighter-rouge">KUBECONFIG</code>.</p>
+
+<p>La terminal principal permanece sin cambios.</p>
+
+<hr />
+
+<h2 id="el-kubeconfig-original-no-se-modifica">El kubeconfig original no se modifica</h2>
+
+<p>El kubeconfig temporal se crea específicamente para la shell hija.</p>
+
+<p>Este kubeconfig:</p>
+
+<ul>
+  <li>contiene la configuración efectiva de Kubernetes</li>
+  <li>conserva clusters, usuarios, contextos, credenciales y plugins de autenticación</li>
+  <li>incrusta certificados y claves referenciados mediante rutas locales</li>
+  <li>selecciona el contexto solicitado</li>
+  <li>aplica el namespace seleccionado únicamente a ese contexto</li>
+  <li>se crea con permisos <code class="language-plaintext highlighter-rouge">0600</code></li>
+  <li>se expone solamente dentro de la shell hija</li>
+  <li>se elimina después de abandonar la shell</li>
+</ul>
+
+<p>El kubeconfig original permanece intacto.</p>
+
+<p>Cuando terminas:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">exit</span>
+</code></pre></div></div>
+
+<p>regresas a la terminal anterior con la misma configuración de Kubernetes que tenías antes.</p>
+
+<hr />
+
+<h2 id="trabajar-con-varios-clusters-en-paralelo">Trabajar con varios clusters en paralelo</h2>
+
+<p>Esta es una de las ventajas más útiles del nuevo flujo.</p>
+
+<p>Abre una terminal para staging:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek shell   <span class="nt">--context</span> staging   <span class="nt">--namespace</span> payments
+</code></pre></div></div>
+
+<p>Y otra terminal para producción:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek shell   <span class="nt">--context</span> production   <span class="nt">--namespace</span> payments
+</code></pre></div></div>
+
+<p>Cada terminal mantiene su propio alcance temporal de Kubernetes:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[k8s:staging ns:payments]
+</code></pre></div></div>
+
+<p>y:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[k8s:production ns:payments]
+</code></pre></div></div>
+
+<p>Puedes comparar logs, recursos, releases de Helm, estado de Flux o despliegues sin cambiar constantemente un contexto compartido.</p>
+
+<hr />
+
+<h2 id="las-shells-aisladas-anidadas-están-bloqueadas">Las shells aisladas anidadas están bloqueadas</h2>
+
+<p>Abrir una shell aislada dentro de otra puede resultar confuso rápidamente.</p>
+
+<p>Por eso, <code class="language-plaintext highlighter-rouge">kubectl-peek</code> detecta si ya existe una shell aislada activa antes de mostrar cualquier selector.</p>
+
+<p>Intentar abrir otra devuelve un error similar a:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>an isolated kubectl-peek shell is already active
+(context "production", namespace "payments");
+run exit before opening another one
+</code></pre></div></div>
+
+<p>La comprobación se realiza al principio, antes de seleccionar otro contexto o namespace.</p>
+
+<hr />
+
+<h2 id="flujo-basado-primero-en-el-namespace">Flujo basado primero en el namespace</h2>
+
+<p>El selector de namespaces también puede abrir una shell aislada:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek namespace <span class="nt">--shell</span>
+</code></pre></div></div>
+
+<p>Este flujo resulta útil cuando quieres mantener el contexto actual y seleccionar únicamente el namespace.</p>
+
+<p>Puedes proporcionar un filtro inicial:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek namespace pay <span class="nt">--shell</span>
+</code></pre></div></div>
+
+<p>O indicar explícitamente otro contexto:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek namespace   <span class="nt">--context</span> staging   <span class="nt">--shell</span>
+</code></pre></div></div>
+
+<p>Sin <code class="language-plaintext highlighter-rouge">--shell</code>, el comando guarda el namespace seleccionado en el contexto elegido del kubeconfig:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek namespace
+</code></pre></div></div>
+
+<p>De esta forma dispones de ambas opciones:</p>
+
+<ul>
+  <li>guardar un namespace de manera intencionada</li>
+  <li>abrir una shell efímera limitada a un namespace</li>
+</ul>
+
+<hr />
+
+<h2 id="la-inspección-de-secrets-ahora-es-un-comando-explícito">La inspección de Secrets ahora es un comando explícito</h2>
+
+<p>Como <code class="language-plaintext highlighter-rouge">kubectl-peek</code> ha crecido más allá de la inspección de Secrets, esta funcionalidad ahora dispone de su propio comando principal:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret
+</code></pre></div></div>
+
+<p>Filtrar por nombre:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret database
+</code></pre></div></div>
+
+<p>Inspeccionar otro namespace:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret database <span class="nt">-n</span> staging
+</code></pre></div></div>
+
+<p>Cargar reglas personalizadas para descubrir relaciones con CRDs:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret   <span class="nt">--rules</span> ./examples/rules-all.yaml
+</code></pre></div></div>
+
+<p>La inspección de Secrets sigue incluyendo:</p>
+
+<ul>
+  <li>selección interactiva</li>
+  <li>filtrado y paginación</li>
+  <li>valores decodificados</li>
+  <li>descubrimiento de relaciones integrado</li>
+  <li>descubrimiento de CRDs mediante reglas YAML</li>
+  <li>relaciones <code class="language-plaintext highlighter-rouge">uses</code>, <code class="language-plaintext highlighter-rouge">produces</code> y <code class="language-plaintext highlighter-rouge">references</code></li>
+</ul>
+
+<p>La diferencia es que ahora la CLI presenta la inspección de Secrets, la gestión de namespaces y las shells aisladas como flujos igualmente importantes.</p>
+
+<hr />
+
+<h2 id="por-qué-utilizar-kubeconfigs-temporales">¿Por qué utilizar kubeconfigs temporales?</h2>
+
+<p>Configurar solamente una variable de entorno para el namespace no sería suficiente.</p>
+
+<p>Las herramientas de Kubernetes no utilizan siempre los mismos flags ni variables, pero sí entienden el formato kubeconfig.</p>
+
+<p>Al crear un kubeconfig temporal y exponerlo mediante <code class="language-plaintext highlighter-rouge">KUBECONFIG</code>, el alcance aislado funciona de forma natural con herramientas como:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">kubectl</code></li>
+  <li>Helm</li>
+  <li>Flux</li>
+  <li>flujos de Kustomize que ejecutan clientes de Kubernetes</li>
+  <li>aplicaciones Go que utilizan <code class="language-plaintext highlighter-rouge">client-go</code></li>
+  <li>otras herramientas compatibles con kubeconfig</li>
+</ul>
+
+<p>Esto hace que la shell sea útil más allá de un único comando de <code class="language-plaintext highlighter-rouge">kubectl</code>.</p>
+
+<hr />
+
+<h2 id="instalación">Instalación</h2>
+
+<h3 id="homebrew">Homebrew</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>brew tap pierinho13/tools
+brew <span class="nb">install</span> <span class="nt">--cask</span> kubectl-peek
+</code></pre></div></div>
+
+<p>Para actualizar una instalación existente:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>brew update
+brew upgrade <span class="nt">--cask</span> kubectl-peek
+</code></pre></div></div>
+
+<p>Comprueba la versión instalada:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek <span class="nt">--version</span>
+</code></pre></div></div>
+
+<hr />
+
+<h3 id="github-releases">GitHub Releases</h3>
+
+<p>En GitHub Releases se publican binarios precompilados para macOS, Linux y Windows.</p>
+
+<hr />
+
+<h3 id="compilar-desde-el-código-fuente">Compilar desde el código fuente</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/pierinho13/kubectl-peek.git
+<span class="nb">cd </span>kubectl-peek
+go build <span class="nt">-o</span> kubectl-peek <span class="nb">.</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="ejemplos-de-uso">Ejemplos de uso</h2>
+
+<h3 id="seleccionar-todo-de-forma-interactiva">Seleccionar todo de forma interactiva</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek shell
+</code></pre></div></div>
+
+<h3 id="seleccionar-solamente-el-namespace">Seleccionar solamente el namespace</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek shell <span class="nt">--context</span> production
+</code></pre></div></div>
+
+<h3 id="abrir-directamente-una-shell">Abrir directamente una shell</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek shell <span class="nt">--context</span> production <span class="nt">-n</span> payments
+</code></pre></div></div>
+
+<h3 id="mantener-el-contexto-actual-y-seleccionar-un-namespace-temporal">Mantener el contexto actual y seleccionar un namespace temporal</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek namespace <span class="nt">--shell</span>
+</code></pre></div></div>
+
+<h3 id="guardar-un-namespace-en-el-contexto-actual">Guardar un namespace en el contexto actual</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek namespace
+</code></pre></div></div>
+
+<h3 id="inspeccionar-relaciones-de-un-secret">Inspeccionar relaciones de un Secret</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl-peek secret
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="reflexiones-finales">Reflexiones finales</h2>
+
+<p>El objetivo de <code class="language-plaintext highlighter-rouge">kubectl-peek</code> no es sustituir a <code class="language-plaintext highlighter-rouge">kubectl</code>.</p>
+
+<p>Su objetivo es eliminar fricción de varios flujos de Kubernetes que los platform engineers, SREs y desarrolladores repiten constantemente.</p>
+
+<p>La inspección de Secrets ayuda a responder:</p>
+
+<blockquote>
+  <p>¿Con qué recursos está relacionado este Secret?</p>
+</blockquote>
+
+<p>El nuevo flujo de shells aisladas ayuda a responder:</p>
+
+<blockquote>
+  <p>¿Cómo puedo trabajar de forma segura en este contexto y namespace sin modificar mi entorno real?</p>
+</blockquote>
+
+<p>Esto convierte a <code class="language-plaintext highlighter-rouge">kubectl-peek</code> en una herramienta útil no solo para investigar Secrets, sino también durante despliegues, resolución de incidencias, comparación de clusters, diagnóstico de namespaces y trabajo diario con varios entornos.</p>
+
+<p>El proyecto es open source:</p>
+
+<p><strong>https://github.com/pierinho13/kubectl-peek</strong></p>
+
+<p>Las contribuciones, sugerencias e ideas son bienvenidas.</p>
+
+<p>Si te interesa este tipo de trabajo de platform engineering, puedes conocer mejor mi experiencia o <a href="/es/contact">contactar conmigo</a>.</p>
+</div>
+
+  <footer class="post-footer">
+    <a href="/es/blog" class="back-link-footer">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+      Ver más artículos
+    </a>
+  </footer>
+</article>
+
+      </div>
+    
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="/es/">
+            <span class="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="3.2"></circle>
+                <path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"></path>
+              </svg>
+            </span>
+            <span class="brand-text">K8sReady</span>
+          </a>
+          <p>Kubernetes, Platform Engineering, Cloud Native y Open Source a través de artículos, proyectos y experiencias reales.</p>
+        </div>
+
+        <div>
+          <h2 class="footer-heading">Conecta</h2>
+          <div class="social-row">
+            <a class="social-button" href="https://github.com/pierinho13" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .7a11.3 11.3 0 00-3.57 22.02c.57.1.78-.25.78-.55v-2.16c-3.18.69-3.85-1.35-3.85-1.35-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.75 2.68 1.25 3.33.95.1-.74.4-1.25.73-1.54-2.54-.29-5.21-1.27-5.21-5.59 0-1.24.44-2.25 1.17-3.04-.12-.29-.51-1.45.11-3 0 0 .95-.3 3.11 1.16A10.8 10.8 0 0112 6.03c.96 0 1.92.13 2.82.38 2.16-1.46 3.11-1.16 3.11-1.16.62 1.55.23 2.71.11 3 .73.79 1.17 1.8 1.17 3.04 0 4.33-2.68 5.3-5.23 5.58.41.35.78 1.05.78 2.12v3.18c0 .3.21.66.79.55A11.3 11.3 0 0012 .7z"/></svg>
+            </a>
+            <a class="social-button" href="https://www.linkedin.com/in/piero-rospigliosi-beltran-cv" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5A2.5 2.5 0 112.5 6a2.5 2.5 0 012.48-2.5zM2.84 8.98h4.28V21H2.84zM9.45 8.98h4.1v1.64h.06c.57-1.08 1.97-2.22 4.05-2.22 4.33 0 5.13 2.85 5.13 6.56V21h-4.27v-5.35c0-1.28-.02-2.92-1.78-2.92-1.78 0-2.05 1.39-2.05 2.82V21H9.45z"/></svg>
+            </a>
+            <a class="social-button" href="mailto:piero.rospigliosib@gmail.com" aria-label="Email">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg>
+            </a>
+          </div>
+        </div>
+
+        <div class="footer-cta">
+          <h2 class="footer-heading">Construyamos algo excelente</h2>
+          <p>Abierto a retos internacionales de Platform Engineering, Kubernetes y Cloud Architecture.</p>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 Piero Rospigliosi Beltran · K8sReady</div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var menuButton = document.getElementById('menu-toggle');
+      var navigation = document.getElementById('primary-navigation');
+      var themeButton = document.getElementById('theme-toggle');
+
+      if (menuButton && navigation) {
+        menuButton.addEventListener('click', function () {
+          var isOpen = navigation.classList.toggle('is-open');
+          menuButton.setAttribute('aria-expanded', String(isOpen));
+        });
+        navigation.querySelectorAll('a').forEach(function (link) {
+          link.addEventListener('click', function () {
+            navigation.classList.remove('is-open');
+            menuButton.setAttribute('aria-expanded', 'false');
+          });
+        });
+      }
+
+      if (themeButton) {
+        themeButton.addEventListener('click', function () {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          if (dark) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('k8sready-theme', 'light');
+          } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('k8sready-theme', 'dark');
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

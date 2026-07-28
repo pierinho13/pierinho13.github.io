@@ -1,393 +1,27 @@
 <!DOCTYPE html>
+
+
+
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>K8sReady - Exponiendo URLs internas y externas en GKE sin mezclar responsabilidades</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E☸%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="Platform Engineering, Kubernetes and Open Source Infrastructure Tooling">
+  <meta name="theme-color" content="#07142f">
+  <title>Exponiendo URLs internas y externas en GKE sin mezclar responsabilidades · K8sReady</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%234f46e5'/%3E%3Ctext x='50' y='70' text-anchor='middle' font-size='62' fill='white'%3E%E2%98%B8%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-      background-size: 200% 200%;
-      animation: gradientShift 15s ease infinite;
-      min-height: 100vh;
-      padding: 0;
-      margin: 0;
-      position: relative;
-      overflow-x: hidden;
-      width: 100%;
-      max-width: 100vw;
-    }
-    
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    
-    body::before {
-      content: '';
-      position: absolute;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-      background-size: 50px 50px;
-      animation: float 20s linear infinite;
-      pointer-events: none;
-    }
-    
-    body::after {
-      content: '';
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: 
-        radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 50% 50%, rgba(240, 147, 251, 0.1) 0%, transparent 50%);
-      animation: pulse 8s ease-in-out infinite;
-      pointer-events: none;
-    }
-    
-    @keyframes float {
-      0% { transform: translate(0, 0); }
-      100% { transform: translate(-50px, -50px); }
-    }
-    
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.8; transform: scale(1.05); }
-    }
-    
-    .header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      width: 100%;
-      max-width: 100vw;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
-      z-index: 1000;
-      padding: 20px 0;
-      overflow-x: hidden;
-    }
-    
-    .header-content {
-      max-width: 1200px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 0 40px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-sizing: border-box;
-    }
-    
-    .logo {
-      font-size: 1.5em;
-      font-weight: 700;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-decoration: none;
-      transition: transform 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .logo-icon {
-      display: inline-block;
-      width: 24px;
-      height: 24px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 4px;
-      position: relative;
-      animation: rotate 3s linear infinite;
-    }
-    
-    .logo-icon::before {
-      content: '☸';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 14px;
-      color: white;
-    }
-    
-    @keyframes rotate {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    .logo:hover {
-      transform: scale(1.05);
-    }
-    
-    .logo:hover .logo-icon {
-      animation-duration: 1s;
-    }
-    
-    .nav {
-      display: flex;
-      gap: 35px;
-      list-style: none;
-      align-items: center;
-    }
-    
-    .nav-link {
-      color: #333;
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 0.95em;
-      position: relative;
-      transition: all 0.3s ease;
-      padding: 8px 0;
-      letter-spacing: 0.3px;
-    }
-    
-    .nav-link:hover {
-      color: #667eea;
-    }
-    
-    .nav-link::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 0;
-      height: 2px;
-      background: linear-gradient(90deg, #667eea, #764ba2);
-      transition: width 0.3s ease;
-    }
-    
-    .nav-link:hover::after,
-    .nav-link.active::after {
-      width: 100%;
-    }
-    
-      .nav-link.active {
-        color: #667eea;
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <script>
+    (function () {
+      var storedTheme = localStorage.getItem('k8sready-theme');
+      if (storedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
       }
-      
-      .lang-selector {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-left: 20px;
-        padding-left: 20px;
-        border-left: 1px solid rgba(0,0,0,0.1);
-      }
-      
-      .lang-link {
-        color: #666;
-        text-decoration: none;
-        font-size: 0.9em;
-        font-weight: 500;
-        transition: color 0.3s ease;
-        padding: 4px 8px;
-        border-radius: 4px;
-      }
-      
-      .lang-link:hover {
-        color: #667eea;
-        background: rgba(102, 126, 234, 0.1);
-      }
-      
-      .lang-link.active {
-        color: #667eea;
-        font-weight: 600;
-      }
-    
-    .main-content {
-      margin-top: 100px;
-      padding: 40px 20px;
-      min-height: calc(100vh - 100px);
-      width: 100%;
-      max-width: 100vw;
-      overflow-x: hidden;
-      box-sizing: border-box;
-    }
-    
-    .container {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 28px;
-      padding: 90px 70px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.2);
-      text-align: center;
-      max-width: 900px;
-      width: 100%;
-      margin: 0 auto;
-      position: relative;
-      z-index: 1;
-      animation: fadeInUp 0.8s ease-out;
-      overflow: hidden;
-    }
-    
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    .name-container {
-      position: relative;
-      margin-bottom: 30px;
-    }
-    
-    h1 {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      font-size: 3.5em;
-      font-weight: 700;
-      margin: 0;
-      letter-spacing: -1px;
-      line-height: 1.2;
-      animation: nameGlow 3s ease-in-out infinite;
-    }
-    
-    @keyframes nameGlow {
-      0%, 100% { filter: brightness(1); }
-      50% { filter: brightness(1.1); }
-    }
-    
-    .subtitle {
-      color: #666;
-      font-size: 1.1em;
-      font-weight: 400;
-      margin-top: 20px;
-      letter-spacing: 0.5px;
-    }
-    
-    .divider {
-      width: 60px;
-      height: 3px;
-      background: linear-gradient(90deg, transparent, #667eea, transparent);
-      margin: 30px auto;
-      border-radius: 2px;
-    }
-    
-    .social-links {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      margin-top: 40px;
-    }
-    
-    .social-link {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    }
-    
-    .social-link:hover {
-      transform: translateY(-5px) scale(1.1);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
-    }
-    
-    @media (max-width: 768px) {
-      .header-content {
-        padding: 0 20px;
-        flex-direction: column;
-        gap: 15px;
-      }
-      
-      .nav {
-        gap: 20px;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-      
-      .nav-link {
-        font-size: 0.9em;
-      }
-      
-      .lang-selector {
-        margin-left: 0;
-        padding-left: 0;
-        border-left: none;
-        margin-top: 10px;
-        justify-content: center;
-      }
-      
-      .main-content {
-        margin-top: 120px;
-      }
-      
-      .container {
-        padding: 60px 40px;
-        border-radius: 24px;
-      }
-      
-      .logo {
-        font-size: 1.3em;
-      }
-      
-      .logo-icon {
-        width: 20px;
-        height: 20px;
-      }
-    }
-    
-    @media (max-width: 480px) {
-      .header {
-        padding: 15px 0;
-      }
-      
-      .header-content {
-        padding: 0 15px;
-      }
-      
-      .nav {
-        gap: 15px;
-      }
-      
-      .nav-link {
-        font-size: 0.85em;
-        padding: 6px 0;
-      }
-      
-      .main-content {
-        margin-top: 110px;
-        padding: 20px 15px;
-      }
-      
-      .container {
-        padding: 50px 30px;
-        border-radius: 20px;
-      }
-    }
-  </style>
+    })();
+  </script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-PPVYV3JC99"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -397,43 +31,57 @@
   </script>
 </head>
 <body>
-  <header class="header">
-    <div class="header-content">
-      
-      
-        <a href="/en/" class="logo">
-      
-        <span class="logo-icon"></span>
-        <span>K8sReady</span>
+  <a class="skip-link" href="#main-content">Saltar al contenido</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/es/" aria-label="K8sReady home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="3.2"></circle>
+            <path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"></path>
+          </svg>
+        </span>
+        <span class="brand-text">K8sReady</span>
       </a>
-      <nav style="display: flex; align-items: center; gap: 20px;">
-        <ul class="nav">
-          
-          
+
+      <div class="header-actions">
+        <nav id="primary-navigation" class="primary-nav" aria-label="Navegación principal">
+          <ul>
             
-            <li><a href="/en/" class="nav-link ">Home</a></li>
-            <li><a href="/en/information" class="nav-link ">Information</a></li>
-            <!-- <li><a href="/en/services" class="nav-link ">Services</a></li> -->
-            <li><a href="/en/blog" class="nav-link ">Blog</a></li>
-            <li><a href="/en/contact" class="nav-link ">Contact</a></li>
-          
-        </ul>
-        <div class="lang-selector">
-          <a href="/es/" class="lang-link ">🇪🇸 ES</a>
-          <span style="color: #ccc;">|</span>
-          <a href="/en/" class="lang-link ">🇬🇧 EN</a>
-        </div>
-      </nav>
+              <li><a href="/es/" class="nav-link ">Inicio</a></li>
+              <li><a href="/es/blog" class="nav-link active">Blog</a></li>
+              <li><a href="/es/#projects" class="nav-link">Proyectos</a></li>
+              <li><a href="/es/informacion" class="nav-link ">Sobre mí</a></li>
+              <li><a href="/es/contacto" class="nav-link ">Contacto</a></li>
+            
+          </ul>
+          <div class="language-switcher" aria-label="Language selector">
+            <a href="/es/" class="language-link active">🇪🇸 ES</a>
+            <a href="/en/" class="language-link ">🇬🇧 EN</a>
+          </div>
+        </nav>
+
+        <button class="icon-button" id="theme-toggle" type="button" aria-label="Cambiar tema">
+          <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+          </svg>
+        </button>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Abrir menú">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 7h16M4 12h16M4 17h16"></path>
+          </svg>
+        </button>
+      </div>
     </div>
   </header>
-  
-  <main class="main-content">
-    <div class="container">
-      <article class="blog-post">
+
+  <main id="main-content" class="site-main">
+    
+      <div class="page-frame page-frame--wide">
+        <article class="blog-post">
   <a href="/es/blog" class="back-link">
-    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <path d="M19 12H5M12 19l-7-7 7-7"></path>
-    </svg>
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
     Volver al blog
   </a>
 
@@ -441,39 +89,24 @@
     <h1 class="post-title">Exponiendo URLs internas y externas en GKE sin mezclar responsabilidades</h1>
     <div class="post-meta">
       <time datetime="2026-01-12T00:00:00+01:00">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="16" y1="2" x2="16" y2="6"></line>
-          <line x1="8" y1="2" x2="8" y2="6"></line>
-          <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>
-        
-          12 de January, 2026
-        
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>
+        12/01/2026
       </time>
       <span class="reading-time">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10"></circle>
-          <polyline points="12 6 12 12 16 14"></polyline>
-        </svg>
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
         
         
         
-        
-          2 min de lectura
-        
+        2 min de lectura
       </span>
     </div>
   </header>
 
   
-  <div class="post-image">
-    <img src="/assets/img/load-balancers.png" alt="Exponiendo URLs internas y externas en GKE sin mezclar responsabilidades">
-  </div>
+    <div class="post-image"><img src="/assets/img/load-balancers.png" alt="Exponiendo URLs internas y externas en GKE sin mezclar responsabilidades"></div>
   
 
-  <div class="post-content">
-    <p>Cuando diseñas una arquitectura en <strong>GCP con Kubernetes</strong>, una de las decisiones más importantes es <strong>cómo exponer tus URLs internas y externas sin mezclar responsabilidades ni comprometer seguridad</strong>.</p>
+  <div class="post-content"><p>Cuando diseñas una arquitectura en <strong>GCP con Kubernetes</strong>, una de las decisiones más importantes es <strong>cómo exponer tus URLs internas y externas sin mezclar responsabilidades ni comprometer seguridad</strong>.</p>
 
 <p>No es un problema de “qué funciona”, sino de <strong>qué modelo mental quieres imponer a tu plataforma</strong>.</p>
 
@@ -575,247 +208,92 @@ Lo que cambia es <strong>cómo</strong> se llega hasta ellos.</p>
 <p>Diseñar bien esta separación desde el principio ahorra complejidad, reduce riesgo operativo y hace que la arquitectura sea mucho más fácil de razonar a largo plazo.</p>
 
 <p>Si te interesa este tipo de arquitecturas, puedes ver más sobre mi experiencia o <a href="/es/contacto">contactarme</a>.</p>
-
-  </div>
+</div>
 
   <footer class="post-footer">
     <a href="/es/blog" class="back-link-footer">
-      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path d="M19 12H5M12 19l-7-7 7-7"></path>
-      </svg>
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
       Ver más artículos
     </a>
   </footer>
 </article>
 
-<style>
-  .blog-post {
-    text-align: left;
-  }
-
-  .back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: #667eea;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.95em;
-    margin-bottom: 30px;
-    transition: all 0.3s ease;
-  }
-
-  .back-link:hover {
-    color: #764ba2;
-    transform: translateX(-5px);
-  }
-
-  .post-header {
-    margin-bottom: 40px;
-    padding-bottom: 30px;
-    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
-  }
-
-  .post-title {
-    font-size: 2.5em !important;
-    font-weight: 700 !important;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 20px !important;
-    line-height: 1.3;
-  }
-
-  .post-meta {
-    display: flex;
-    align-items: center;
-    gap: 25px;
-    color: #888;
-    font-size: 0.95em;
-    flex-wrap: wrap;
-  }
-
-  .post-meta time,
-  .post-meta .reading-time {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .post-meta svg {
-    color: #667eea;
-  }
-
-  .post-image {
-    margin-bottom: 40px;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-  }
-
-  .post-image img {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-
-  .post-content {
-    font-size: 1.1em;
-    line-height: 1.9;
-    color: #444;
-  }
-
-  .post-content h2 {
-    font-size: 1.6em;
-    font-weight: 600;
-    color: #333;
-    margin-top: 50px;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid rgba(102, 126, 234, 0.2);
-  }
-
-  .post-content h3 {
-    font-size: 1.3em;
-    font-weight: 600;
-    color: #444;
-    margin-top: 35px;
-    margin-bottom: 15px;
-  }
-
-  .post-content p {
-    margin-bottom: 20px;
-    text-align: justify;
-  }
-
-  .post-content ul,
-  .post-content ol {
-    margin: 25px 0;
-    padding-left: 25px;
-  }
-
-  .post-content li {
-    margin-bottom: 12px;
-    line-height: 1.7;
-  }
-
-  .post-content code {
-    background: rgba(102, 126, 234, 0.1);
-    color: #667eea;
-    padding: 3px 8px;
-    border-radius: 5px;
-    font-size: 0.9em;
-    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
-  }
-
-  .post-content pre {
-    background: #1e1e2e;
-    color: #cdd6f4;
-    padding: 25px;
-    border-radius: 12px;
-    overflow-x: auto;
-    margin: 30px 0;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-  }
-
-  .post-content pre code {
-    background: none;
-    color: inherit;
-    padding: 0;
-    font-size: 0.9em;
-  }
-
-  .post-content blockquote {
-    border-left: 4px solid #667eea;
-    margin: 30px 0;
-    padding: 20px 25px;
-    background: rgba(102, 126, 234, 0.05);
-    border-radius: 0 12px 12px 0;
-    font-style: italic;
-    color: #555;
-  }
-
-  .post-content strong {
-    color: #333;
-    font-weight: 600;
-  }
-
-  .post-content a {
-    color: #667eea;
-    text-decoration: none;
-    border-bottom: 1px solid rgba(102, 126, 234, 0.3);
-    transition: all 0.3s ease;
-  }
-
-  .post-content a:hover {
-    border-bottom-color: #667eea;
-  }
-
-  .post-content img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 12px;
-    margin: 30px 0;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-  }
-
-  .post-footer {
-    margin-top: 60px;
-    padding-top: 30px;
-    border-top: 2px solid rgba(102, 126, 234, 0.1);
-    text-align: center;
-  }
-
-  .back-link-footer {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 15px 30px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    text-decoration: none;
-    border-radius: 12px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-  }
-
-  .back-link-footer:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
-  }
-
-  @media (max-width: 768px) {
-    .post-title {
-      font-size: 1.8em !important;
-    }
-
-    .post-meta {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
-    }
-
-    .post-content {
-      font-size: 1em;
-    }
-
-    .post-content h2 {
-      font-size: 1.4em;
-    }
-
-    .post-content pre {
-      padding: 15px;
-      font-size: 0.85em;
-    }
-  }
-</style>
-
-
-
-    </div>
+      </div>
+    
   </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="/es/">
+            <span class="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="3.2"></circle>
+                <path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"></path>
+              </svg>
+            </span>
+            <span class="brand-text">K8sReady</span>
+          </a>
+          <p>Kubernetes, Platform Engineering, Cloud Native y Open Source a través de artículos, proyectos y experiencias reales.</p>
+        </div>
+
+        <div>
+          <h2 class="footer-heading">Conecta</h2>
+          <div class="social-row">
+            <a class="social-button" href="https://github.com/pierinho13" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .7a11.3 11.3 0 00-3.57 22.02c.57.1.78-.25.78-.55v-2.16c-3.18.69-3.85-1.35-3.85-1.35-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.75 2.68 1.25 3.33.95.1-.74.4-1.25.73-1.54-2.54-.29-5.21-1.27-5.21-5.59 0-1.24.44-2.25 1.17-3.04-.12-.29-.51-1.45.11-3 0 0 .95-.3 3.11 1.16A10.8 10.8 0 0112 6.03c.96 0 1.92.13 2.82.38 2.16-1.46 3.11-1.16 3.11-1.16.62 1.55.23 2.71.11 3 .73.79 1.17 1.8 1.17 3.04 0 4.33-2.68 5.3-5.23 5.58.41.35.78 1.05.78 2.12v3.18c0 .3.21.66.79.55A11.3 11.3 0 0012 .7z"/></svg>
+            </a>
+            <a class="social-button" href="https://www.linkedin.com/in/piero-rospigliosi-beltran-cv" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5A2.5 2.5 0 112.5 6a2.5 2.5 0 012.48-2.5zM2.84 8.98h4.28V21H2.84zM9.45 8.98h4.1v1.64h.06c.57-1.08 1.97-2.22 4.05-2.22 4.33 0 5.13 2.85 5.13 6.56V21h-4.27v-5.35c0-1.28-.02-2.92-1.78-2.92-1.78 0-2.05 1.39-2.05 2.82V21H9.45z"/></svg>
+            </a>
+            <a class="social-button" href="mailto:piero.rospigliosib@gmail.com" aria-label="Email">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg>
+            </a>
+          </div>
+        </div>
+
+        <div class="footer-cta">
+          <h2 class="footer-heading">Construyamos algo excelente</h2>
+          <p>Abierto a retos internacionales de Platform Engineering, Kubernetes y Cloud Architecture.</p>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 Piero Rospigliosi Beltran · K8sReady</div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var menuButton = document.getElementById('menu-toggle');
+      var navigation = document.getElementById('primary-navigation');
+      var themeButton = document.getElementById('theme-toggle');
+
+      if (menuButton && navigation) {
+        menuButton.addEventListener('click', function () {
+          var isOpen = navigation.classList.toggle('is-open');
+          menuButton.setAttribute('aria-expanded', String(isOpen));
+        });
+        navigation.querySelectorAll('a').forEach(function (link) {
+          link.addEventListener('click', function () {
+            navigation.classList.remove('is-open');
+            menuButton.setAttribute('aria-expanded', 'false');
+          });
+        });
+      }
+
+      if (themeButton) {
+        themeButton.addEventListener('click', function () {
+          var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          if (dark) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('k8sready-theme', 'light');
+          } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('k8sready-theme', 'dark');
+          }
+        });
+      }
+    })();
+  </script>
 </body>
 </html>
-
