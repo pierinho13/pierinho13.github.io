@@ -90,7 +90,7 @@
         <div class="button-row">
           <a class="button button-primary" href="#projects">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 19h14M7 16l5-11 5 11M8.5 13h7"></path></svg>
-            Explore my work
+            Explore my open-source work
           </a>
           <a class="button button-secondary" href="/en/contact">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>
@@ -155,6 +155,68 @@
       <div class="stat">
         <span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"></path></svg></span>
         <span><strong>∞</strong><span>Passion for automation</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="home-section terminal-showcase" aria-labelledby="terminal-heading">
+  <div class="section-inner">
+    <div class="terminal-showcase-grid">
+      <div class="terminal-copy">
+        <p class="eyebrow">Interactive portfolio</p>
+        <h2 id="terminal-heading">Explore the platform from the terminal</h2>
+        <p>
+          A safe, client-side shell that turns my experience, skills and open-source
+          work into discoverable commands.
+        </p>
+        <ul class="terminal-benefits">
+          <li>Short guided demo, shown once per session</li>
+          <li>Closed and read-only command set</li>
+          <li>No cluster access, backend or external API calls</li>
+        </ul>
+        <p class="terminal-copy-hint">
+          Start with <code>help</code>, <code>kubectl get projects</code> or one of the suggestions.
+        </p>
+      </div>
+
+      <div class="portfolio-terminal" data-portfolio-terminal data-language="en">
+        <div class="terminal-toolbar" aria-hidden="true">
+          <span class="terminal-dot terminal-dot--red"></span>
+          <span class="terminal-dot terminal-dot--amber"></span>
+          <span class="terminal-dot terminal-dot--green"></span>
+          <span class="terminal-title">visitor@k8sready:~</span>
+        </div>
+
+        <div class="terminal-screen">
+          <div class="terminal-output" data-terminal-output role="log" aria-live="polite" aria-relevant="additions"></div>
+
+          <form class="terminal-form" data-terminal-form>
+            <label class="visually-hidden" for="portfolio-terminal-input-en">Portfolio terminal command</label>
+            <span class="terminal-prompt" aria-hidden="true">visitor@k8sready:~$</span>
+            <input
+              id="portfolio-terminal-input-en"
+              class="terminal-input"
+              data-terminal-input
+              type="text"
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="type a command..."
+              aria-describedby="terminal-help-en">
+          </form>
+        </div>
+
+        <div class="terminal-suggestions" aria-label="Suggested commands">
+          <button type="button" data-terminal-command="kubectl get projects">kubectl get projects</button>
+          <button type="button" data-terminal-command="kubectl get experience">kubectl get experience</button>
+          <button type="button" data-terminal-command="kubectl describe project kubectl-peek">describe kubectl-peek</button>
+          <button type="button" data-terminal-command="skills">skills</button>
+        </div>
+
+        <p class="terminal-footnote" id="terminal-help-en">
+          Simulated portfolio shell. It never executes commands on your device or against a Kubernetes cluster.
+        </p>
       </div>
     </div>
   </div>
@@ -286,6 +348,7 @@
     </div>
   </div>
 </section>
+<script src="/assets/js/portfolio-terminal.js" defer></script>
 
     
   </main>

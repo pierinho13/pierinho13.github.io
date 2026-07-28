@@ -90,7 +90,7 @@
         <div class="button-row">
           <a class="button button-primary" href="#projects">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 19h14M7 16l5-11 5 11M8.5 13h7"></path></svg>
-            Ver mi trabajo
+            Explorar mis proyectos open source
           </a>
           <a class="button button-secondary" href="/es/contacto">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>
@@ -155,6 +155,68 @@
       <div class="stat">
         <span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"></path></svg></span>
         <span><strong>∞</strong><span>Pasión por la automatización</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="home-section terminal-showcase" aria-labelledby="terminal-heading">
+  <div class="section-inner">
+    <div class="terminal-showcase-grid">
+      <div class="terminal-copy">
+        <p class="eyebrow">Portfolio interactivo</p>
+        <h2 id="terminal-heading">Explora la plataforma desde la terminal</h2>
+        <p>
+          Una shell segura que funciona en el navegador y convierte mi experiencia,
+          conocimientos y proyectos open source en comandos descubribles.
+        </p>
+        <ul class="terminal-benefits">
+          <li>Demo guiada breve, mostrada una vez por sesión</li>
+          <li>Conjunto cerrado de comandos de solo lectura</li>
+          <li>Sin acceso a clusters, backend ni APIs externas</li>
+        </ul>
+        <p class="terminal-copy-hint">
+          Empieza con <code>help</code>, <code>kubectl get projects</code> o una de las sugerencias.
+        </p>
+      </div>
+
+      <div class="portfolio-terminal" data-portfolio-terminal data-language="es">
+        <div class="terminal-toolbar" aria-hidden="true">
+          <span class="terminal-dot terminal-dot--red"></span>
+          <span class="terminal-dot terminal-dot--amber"></span>
+          <span class="terminal-dot terminal-dot--green"></span>
+          <span class="terminal-title">visitor@k8sready:~</span>
+        </div>
+
+        <div class="terminal-screen">
+          <div class="terminal-output" data-terminal-output role="log" aria-live="polite" aria-relevant="additions"></div>
+
+          <form class="terminal-form" data-terminal-form>
+            <label class="visually-hidden" for="portfolio-terminal-input-es">Comando de la terminal del portfolio</label>
+            <span class="terminal-prompt" aria-hidden="true">visitor@k8sready:~$</span>
+            <input
+              id="portfolio-terminal-input-es"
+              class="terminal-input"
+              data-terminal-input
+              type="text"
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="escribe un comando..."
+              aria-describedby="terminal-help-es">
+          </form>
+        </div>
+
+        <div class="terminal-suggestions" aria-label="Comandos sugeridos">
+          <button type="button" data-terminal-command="kubectl get projects">kubectl get projects</button>
+          <button type="button" data-terminal-command="kubectl get experience">kubectl get experience</button>
+          <button type="button" data-terminal-command="kubectl describe project kubectl-peek">describe kubectl-peek</button>
+          <button type="button" data-terminal-command="skills">skills</button>
+        </div>
+
+        <p class="terminal-footnote" id="terminal-help-es">
+          Shell simulada del portfolio. Nunca ejecuta comandos en tu dispositivo ni contra un cluster de Kubernetes.
+        </p>
       </div>
     </div>
   </div>
@@ -286,6 +348,7 @@
     </div>
   </div>
 </section>
+<script src="/assets/js/portfolio-terminal.js" defer></script>
 
     
   </main>
