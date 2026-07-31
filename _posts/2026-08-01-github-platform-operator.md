@@ -27,9 +27,9 @@ At that point, GitHub is no longer just a place where source code is stored.
 
 It is part of the engineering platform.
 
-That is the problem I wanted to address with **github-platform-operator**.
+That is the problem I wanted to address with **[github-platform-operator](https://github.com/pierinho13/github-platform-operator)**.
 
-`github-platform-operator` is an open-source Kubernetes operator for declaratively creating, adopting, and continuously reconciling common GitHub platform resources.
+`[github-platform-operator](https://github.com/pierinho13/github-platform-operator)` is an open-source Kubernetes operator for declaratively creating, adopting, and continuously reconciling common GitHub platform resources.
 
 It manages:
 
@@ -247,7 +247,7 @@ Report status
 
 ## The idea behind github-platform-operator
 
-The goal of `github-platform-operator` is not to expose every GitHub REST API endpoint as a custom resource.
+The goal of `[github-platform-operator](https://github.com/pierinho13/github-platform-operator)` is not to expose every GitHub REST API endpoint as a custom resource.
 
 It intentionally focuses on recurring platform workflows:
 
@@ -359,7 +359,7 @@ They begin with years of accumulated state:
 
 A useful operator must support brownfield adoption.
 
-`github-platform-operator` therefore does not assume that every remote resource should be created from scratch.
+`[github-platform-operator](https://github.com/pierinho13/github-platform-operator)` therefore does not assume that every remote resource should be created from scratch.
 
 If a repository already exists with the declared name, the controller can adopt it.
 
@@ -549,7 +549,7 @@ Declarative automation can be dangerous when deletion semantics are implicit.
 
 Deleting a Kubernetes object should not unexpectedly destroy a production repository.
 
-`github-platform-operator` uses explicit deletion policies:
+`[github-platform-operator](https://github.com/pierinho13/github-platform-operator)` uses explicit deletion policies:
 
 ```text
 Orphan
@@ -736,7 +736,7 @@ It is particularly suitable when:
 - periodic reconciliation is acceptable
 - Kubernetes is not the platform control plane
 
-`github-platform-operator` is designed for a different operating model.
+`[github-platform-operator](https://github.com/pierinho13/github-platform-operator)` is designed for a different operating model.
 
 It fits environments where:
 
@@ -802,7 +802,7 @@ That is appropriate when Crossplane is already a strategic part of the platform.
 
 But I wanted a narrower option.
 
-`github-platform-operator` is a standalone controller focused on recurring GitHub platform tasks.
+`[github-platform-operator](https://github.com/pierinho13/github-platform-operator)` is a standalone controller focused on recurring GitHub platform tasks.
 
 It deliberately trades:
 
@@ -832,7 +832,7 @@ It makes them suitable for different environments.
 | Scripts | Imports, migrations, and one-off automation |
 | Terraform GitHub provider | Plan-driven GitHub provisioning in a Terraform estate |
 | Crossplane GitHub provider | Organizations already building a broader Crossplane control plane |
-| `github-platform-operator` | Focused Kubernetes-native management of recurring GitHub platform workflows |
+| `[github-platform-operator](https://github.com/pierinho13/github-platform-operator)` | Focused Kubernetes-native management of recurring GitHub platform workflows |
 
 The project exists because a focused operator can be easier to introduce when GitHub is the main external platform that needs this model.
 
@@ -848,7 +848,7 @@ That breadth is valuable.
 
 It can also make the user-facing API closely resemble the remote provider schema.
 
-`github-platform-operator` takes a curated approach.
+`[github-platform-operator](https://github.com/pierinho13/github-platform-operator)` takes a curated approach.
 
 The project intentionally does not attempt to manage every GitHub feature.
 
@@ -1071,7 +1071,7 @@ The useful boundary is the set of common platform workflows that can be represen
 
 ## When this approach makes sense
 
-`github-platform-operator` is a good fit when:
+`[github-platform-operator](https://github.com/pierinho13/github-platform-operator)` is a good fit when:
 
 - Kubernetes already acts as a platform control plane
 - Argo CD or Flux already manages desired state
@@ -1095,7 +1095,7 @@ A useful platform tool should make its boundaries clear.
 
 ## Final thoughts
 
-The main goal of `github-platform-operator` is not simply to create repositories.
+The main goal of `[github-platform-operator](https://github.com/pierinho13/github-platform-operator)` is not simply to create repositories.
 
 The goal is to make common GitHub platform configuration:
 
@@ -1125,7 +1125,7 @@ You can ask:
 The project is open source:
 
 <a href="https://github.com/pierinho13/github-platform-operator" target="_blank" rel="noopener noreferrer">
-  github-platform-operator
+  https://github.com/pierinho13/github-platform-operator
 </a>
 
 The complete API, installation guide, operational behavior, deletion policies, and examples are documented in the repository.
