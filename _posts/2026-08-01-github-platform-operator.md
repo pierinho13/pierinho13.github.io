@@ -1124,7 +1124,9 @@ You can ask:
 
 The project is open source:
 
-**https://github.com/pierinho13/github-platform-operator**
+<a href="https://github.com/pierinho13/github-platform-operator" target="_blank" rel="noopener noreferrer">
+  github-platform-operator
+</a>
 
 The complete API, installation guide, operational behavior, deletion policies, and examples are documented in the repository.
 

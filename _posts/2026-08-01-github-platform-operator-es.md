@@ -1124,7 +1124,9 @@ Puedes preguntar:
 
 El proyecto es open source:
 
-**https://github.com/pierinho13/github-platform-operator**
+<a href="https://github.com/pierinho13/github-platform-operator" target="_blank" rel="noopener noreferrer">
+  github-platform-operator
+</a>
 
 La API completa, la guía de instalación, el comportamiento operativo, las políticas de eliminación y los ejemplos están documentados en el repositorio.
 
