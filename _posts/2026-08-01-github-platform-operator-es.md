@@ -318,6 +318,17 @@ Kubernetes proporciona la API y el ciclo de vida.
 
 El operador traduce ese estado deseado en operaciones sobre GitHub.
 
+<figure>
+  <img
+    src="/assets/img/github-platform-operator-architecture.png"
+    alt="github-platform-operator architecture: GitOps manifests flow through Kubernetes to continuously reconcile GitHub resources"
+    loading="lazy"
+  />
+  <figcaption>
+    github-platform-operator turns GitOps-managed Kubernetes resources into continuously reconciled GitHub configuration.
+  </figcaption>
+</figure>
+
 ---
 
 ## El caso real no parte de una organización vacía
