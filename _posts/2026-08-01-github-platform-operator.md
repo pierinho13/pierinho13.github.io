@@ -245,6 +245,17 @@ Report status
 
 ---
 
+<figure>
+  <img
+    src="/assets/img/github-platform-operator-architecture.png"
+    alt="github-platform-operator architecture: GitOps manifests flow through Kubernetes to continuously reconcile GitHub resources"
+    loading="lazy"
+  />
+  <figcaption>
+    github-platform-operator turns GitOps-managed Kubernetes resources into continuously reconciled GitHub configuration.
+  </figcaption>
+</figure>
+
 ## The idea behind github-platform-operator
 
 The goal of `github-platform-operator` is not to expose every GitHub REST API endpoint as a custom resource.
