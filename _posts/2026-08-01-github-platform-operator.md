@@ -3,7 +3,7 @@ layout: post
 title: "Your GitHub organization is infrastructure too"
 date: 2026-07-31
 lang: en
-image: /assets/img/github-platform-operator.png
+image: /assets/img/github-platform-operator-english.png
 excerpt: "GitHub configuration is platform state. I built github-platform-operator to manage repositories, rulesets, organization members, teams, access, environments, secrets, and variables through Kubernetes and GitOps, with continuous reconciliation and safe adoption."
 ---
 
