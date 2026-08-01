@@ -1,0 +1,573 @@
+--- a/_layouts/default.html
++++ b/_layouts/default.html
+@@ -35,7 +35,7 @@
+ <body>
+   <a class="skip-link" href="#main-content">{% if current_lang == 'es' %}Saltar al contenido{% else %}Skip to content{% endif %}</a>
+ 
+-  <header class="site-header">
++  <header class="site-header" data-pagefind-ignore>
+     <div class="header-inner">
+       <a class="brand" href="/{% if current_lang == 'es' %}es{% else %}en{% endif %}/" aria-label="K8sReady home">
+         <span class="brand-mark" aria-hidden="true">
+@@ -72,6 +72,10 @@
+           </div>
+         </nav>
+ 
++        <button class="search-trigger" id="search-trigger" type="button" aria-haspopup="dialog" aria-controls="search-dialog" aria-label="{% if current_lang == 'es' %}Buscar en K8sReady{% else %}Search K8sReady{% endif %}">
++          <span>{% if current_lang == 'es' %}Buscar{% else %}Search{% endif %}</span>
++          <kbd>{% if current_lang == 'es' %}Ctrl K{% else %}Ctrl K{% endif %}</kbd>
++        </button>
+         <button class="icon-button" id="theme-toggle" type="button" aria-label="{% if current_lang == 'es' %}Cambiar tema{% else %}Toggle theme{% endif %}">
+           <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+             <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+@@ -86,7 +90,7 @@
+     </div>
+   </header>
+ 
+-  <main id="main-content" class="site-main">
++  <main id="main-content" class="site-main" data-pagefind-body>
+     {% if page.homepage %}
+       {{ content }}
+     {% else %}
+@@ -96,7 +100,28 @@
+     {% endif %}
+   </main>
+ 
+-  <footer class="site-footer">
++  <div class="search-dialog" id="search-dialog" role="dialog" aria-modal="true" aria-labelledby="search-dialog-title" hidden data-pagefind-ignore>
++    <div class="search-dialog__backdrop" data-search-close></div>
++    <div class="search-dialog__panel">
++      <div class="search-dialog__header">
++        <div>
++          <p class="search-dialog__eyebrow">K8sReady</p>
++          <h2 id="search-dialog-title">{% if current_lang == 'es' %}Buscar contenido{% else %}Search content{% endif %}</h2>
++        </div>
++        <button class="search-dialog__close" type="button" data-search-close aria-label="{% if current_lang == 'es' %}Cerrar buscador{% else %}Close search{% endif %}">Esc</button>
++      </div>
++      <label class="search-dialog__input-wrap" for="site-search-input">
++        <span class="sr-only">{% if current_lang == 'es' %}Buscar en K8sReady{% else %}Search K8sReady{% endif %}</span>
++        <input id="site-search-input" class="search-dialog__input" type="search" autocomplete="off" spellcheck="false" placeholder="{% if current_lang == 'es' %}Buscar artículos, proyectos y tecnologías...{% else %}Search articles, projects and technologies...{% endif %}">
++      </label>
++      <div class="search-dialog__status" id="search-status" aria-live="polite">
++        {% if current_lang == 'es' %}Escribe para buscar en K8sReady.{% else %}Start typing to search K8sReady.{% endif %}
++      </div>
++      <div class="search-results" id="search-results"></div>
++    </div>
++  </div>
++
++  <footer class="site-footer" data-pagefind-ignore>
+     <div class="footer-inner">
+       <div class="footer-grid">
+         <div class="footer-brand">
+@@ -136,6 +161,7 @@
+     </div>
+   </footer>
+ 
++  <script src="/assets/js/search.js" defer></script>
+   <script>
+     (function () {
+       var menuButton = document.getElementById('menu-toggle');
+--- a/assets/css/site.css
++++ b/assets/css/site.css
+@@ -2329,3 +2329,254 @@
+ .terminal-showcase {
+   padding-top: clamp(48px, 6vw, 72px);
+ }
++
++/* Pagefind command palette */
++.search-trigger {
++  display: inline-flex;
++  align-items: center;
++  gap: 10px;
++  min-height: 40px;
++  padding: 0 10px 0 13px;
++  border: 1px solid var(--border);
++  border-radius: 10px;
++  background: var(--surface);
++  color: var(--text-soft);
++  font: inherit;
++  font-size: 0.84rem;
++  font-weight: 700;
++  cursor: pointer;
++  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
++}
++
++.search-trigger:hover,
++.search-trigger:focus-visible {
++  border-color: var(--indigo-500);
++  color: var(--text);
++  transform: translateY(-1px);
++}
++
++.search-trigger kbd,
++.search-dialog__close {
++  border: 1px solid var(--border);
++  border-bottom-color: var(--border-strong);
++  border-radius: 7px;
++  background: var(--surface-soft);
++  color: var(--text-muted);
++  font-family: "Fira Code", monospace;
++  font-size: 0.72rem;
++  font-weight: 600;
++  line-height: 1;
++}
++
++.search-trigger kbd {
++  padding: 5px 7px;
++}
++
++.search-is-open {
++  overflow: hidden;
++}
++
++.search-dialog[hidden] {
++  display: none;
++}
++
++.search-dialog {
++  position: fixed;
++  inset: 0;
++  z-index: 1000;
++  display: grid;
++  place-items: start center;
++  padding: min(12vh, 110px) 20px 32px;
++  opacity: 0;
++  transition: opacity 0.16s ease;
++}
++
++.search-dialog.is-open {
++  opacity: 1;
++}
++
++.search-dialog__backdrop {
++  position: absolute;
++  inset: 0;
++  background: rgba(7, 20, 47, 0.72);
++  backdrop-filter: blur(8px);
++}
++
++.search-dialog__panel {
++  position: relative;
++  width: min(720px, 100%);
++  max-height: min(720px, 78vh);
++  overflow: auto;
++  border: 1px solid var(--border-strong);
++  border-radius: 20px;
++  background: var(--surface);
++  box-shadow: var(--shadow-lg);
++  transform: translateY(-12px) scale(0.985);
++  transition: transform 0.16s ease;
++}
++
++.search-dialog.is-open .search-dialog__panel {
++  transform: translateY(0) scale(1);
++}
++
++.search-dialog__header {
++  display: flex;
++  align-items: flex-start;
++  justify-content: space-between;
++  gap: 20px;
++  padding: 24px 24px 18px;
++}
++
++.search-dialog__eyebrow {
++  margin: 0 0 3px;
++  color: var(--indigo-500);
++  font-family: "Fira Code", monospace;
++  font-size: 0.76rem;
++  font-weight: 700;
++  letter-spacing: 0.08em;
++  text-transform: uppercase;
++}
++
++.search-dialog__header h2 {
++  margin: 0;
++  font-size: clamp(1.35rem, 4vw, 1.8rem);
++}
++
++.search-dialog__close {
++  padding: 8px 10px;
++  cursor: pointer;
++}
++
++.search-dialog__input-wrap {
++  display: block;
++  padding: 0 24px;
++}
++
++.search-dialog__input {
++  width: 100%;
++  min-height: 54px;
++  padding: 0 16px;
++  border: 1px solid var(--border-strong);
++  border-radius: 12px;
++  outline: none;
++  background: var(--surface-soft);
++  color: var(--text);
++  font: inherit;
++  font-size: 1rem;
++  transition: border-color 0.2s ease, box-shadow 0.2s ease;
++}
++
++.search-dialog__input:focus {
++  border-color: var(--indigo-500);
++  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.14);
++}
++
++.search-dialog__status {
++  padding: 13px 24px;
++  color: var(--text-muted);
++  font-size: 0.82rem;
++}
++
++.search-results {
++  display: grid;
++  gap: 4px;
++  padding: 0 12px 14px;
++}
++
++.search-result {
++  display: grid;
++  gap: 5px;
++  padding: 14px 12px;
++  border: 1px solid transparent;
++  border-radius: 12px;
++  color: inherit;
++  text-decoration: none;
++  transition: border-color 0.18s ease, background 0.18s ease;
++}
++
++.search-result:hover,
++.search-result:focus-visible {
++  border-color: var(--border);
++  background: var(--surface-soft);
++  outline: none;
++}
++
++.search-result__title {
++  color: var(--text);
++  font-size: 1rem;
++  font-weight: 800;
++}
++
++.search-result__excerpt {
++  display: -webkit-box;
++  overflow: hidden;
++  color: var(--text-soft);
++  font-size: 0.88rem;
++  line-height: 1.55;
++  -webkit-box-orient: vertical;
++  -webkit-line-clamp: 2;
++}
++
++.search-result__excerpt mark {
++  border-radius: 3px;
++  background: var(--surface-muted);
++  color: var(--indigo-700);
++  font-weight: 700;
++}
++
++[data-theme="dark"] .search-result__excerpt mark {
++  color: var(--violet-400);
++}
++
++.search-result__path {
++  overflow: hidden;
++  color: var(--text-muted);
++  font-family: "Fira Code", monospace;
++  font-size: 0.72rem;
++  text-overflow: ellipsis;
++  white-space: nowrap;
++}
++
++.sr-only {
++  position: absolute;
++  width: 1px;
++  height: 1px;
++  padding: 0;
++  margin: -1px;
++  overflow: hidden;
++  clip: rect(0, 0, 0, 0);
++  white-space: nowrap;
++  border: 0;
++}
++
++@media (max-width: 760px) {
++  .search-trigger span {
++    display: none;
++  }
++
++  .search-trigger {
++    min-width: 44px;
++    justify-content: center;
++    padding: 0 8px;
++  }
++
++  .search-dialog {
++    padding: 16px 12px;
++  }
++
++  .search-dialog__panel {
++    max-height: calc(100vh - 32px);
++    border-radius: 16px;
++  }
++
++  .search-dialog__header,
++  .search-dialog__input-wrap {
++    padding-right: 18px;
++    padding-left: 18px;
++  }
++
++  .search-dialog__status {
++    padding-right: 18px;
++    padding-left: 18px;
++  }
++}
+--- /dev/null
++++ b/assets/js/search.js
+@@ -0,0 +1,179 @@
++(function () {
++  var dialog = document.getElementById('search-dialog');
++  var trigger = document.getElementById('search-trigger');
++  var input = document.getElementById('site-search-input');
++  var results = document.getElementById('search-results');
++  var status = document.getElementById('search-status');
++
++  if (!dialog || !trigger || !input || !results || !status) {
++    return;
++  }
++
++  var language = document.documentElement.lang === 'es' ? 'es' : 'en';
++  var copy = language === 'es'
++    ? {
++        initial: 'Escribe para buscar en K8sReady.',
++        loading: 'Preparando el buscador...',
++        searching: 'Buscando...',
++        noResults: 'No se encontraron resultados.',
++        unavailable: 'El buscador estará disponible después del próximo despliegue.',
++        singular: 'resultado',
++        plural: 'resultados'
++      }
++    : {
++        initial: 'Start typing to search K8sReady.',
++        loading: 'Preparing search...',
++        searching: 'Searching...',
++        noResults: 'No results found.',
++        unavailable: 'Search will be available after the next deployment.',
++        singular: 'result',
++        plural: 'results'
++      };
++
++  var pagefindPromise;
++  var debounceTimer;
++  var requestNumber = 0;
++  var previousFocus;
++
++  function loadPagefind() {
++    if (!pagefindPromise) {
++      status.textContent = copy.loading;
++      pagefindPromise = import('/pagefind/pagefind.js')
++        .then(function (pagefind) {
++          return pagefind.init().then(function () {
++            return pagefind;
++          });
++        })
++        .catch(function (error) {
++          console.warn('Pagefind could not be loaded:', error);
++          pagefindPromise = null;
++          throw error;
++        });
++    }
++
++    return pagefindPromise;
++  }
++
++  function openSearch() {
++    previousFocus = document.activeElement;
++    dialog.hidden = false;
++    document.body.classList.add('search-is-open');
++    window.requestAnimationFrame(function () {
++      dialog.classList.add('is-open');
++      input.focus();
++    });
++    loadPagefind().catch(function () {
++      status.textContent = copy.unavailable;
++    });
++  }
++
++  function closeSearch() {
++    dialog.classList.remove('is-open');
++    document.body.classList.remove('search-is-open');
++    window.setTimeout(function () {
++      dialog.hidden = true;
++    }, 160);
++    if (previousFocus && typeof previousFocus.focus === 'function') {
++      previousFocus.focus();
++    }
++  }
++
++  function clearResults(message) {
++    results.replaceChildren();
++    status.textContent = message;
++  }
++
++  function createResultItem(data) {
++    var link = document.createElement('a');
++    link.className = 'search-result';
++    link.href = data.url;
++
++    var title = document.createElement('span');
++    title.className = 'search-result__title';
++    title.textContent = data.meta && data.meta.title ? data.meta.title : data.url;
++
++    var excerpt = document.createElement('span');
++    excerpt.className = 'search-result__excerpt';
++    excerpt.innerHTML = data.excerpt || '';
++
++    var path = document.createElement('span');
++    path.className = 'search-result__path';
++    path.textContent = data.url;
++
++    link.append(title, excerpt, path);
++    return link;
++  }
++
++  async function runSearch(query) {
++    var currentRequest = ++requestNumber;
++    status.textContent = copy.searching;
++
++    try {
++      var pagefind = await loadPagefind();
++      var search = await pagefind.search(query);
++      var loadedResults = await Promise.all(
++        search.results.slice(0, 8).map(function (result) {
++          return result.data();
++        })
++      );
++
++      if (currentRequest !== requestNumber) {
++        return;
++      }
++
++      results.replaceChildren();
++
++      if (!loadedResults.length) {
++        status.textContent = copy.noResults;
++        return;
++      }
++
++      var count = search.results.length;
++      status.textContent = count + ' ' + (count === 1 ? copy.singular : copy.plural);
++      loadedResults.forEach(function (data) {
++        results.appendChild(createResultItem(data));
++      });
++    } catch (error) {
++      if (currentRequest === requestNumber) {
++        clearResults(copy.unavailable);
++      }
++    }
++  }
++
++  trigger.addEventListener('click', openSearch);
++
++  dialog.querySelectorAll('[data-search-close]').forEach(function (element) {
++    element.addEventListener('click', closeSearch);
++  });
++
++  input.addEventListener('input', function () {
++    var query = input.value.trim();
++    window.clearTimeout(debounceTimer);
++
++    if (query.length < 2) {
++      requestNumber += 1;
++      clearResults(copy.initial);
++      return;
++    }
++
++    debounceTimer = window.setTimeout(function () {
++      runSearch(query);
++    }, 180);
++  });
++
++  document.addEventListener('keydown', function (event) {
++    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
++      event.preventDefault();
++      if (dialog.hidden) {
++        openSearch();
++      } else {
++        closeSearch();
++      }
++      return;
++    }
++
++    if (event.key === 'Escape' && !dialog.hidden) {
++      closeSearch();
++    }
++  });
++})();
+--- /dev/null
++++ b/.github/workflows/deploy-pages.yml
+@@ -0,0 +1,62 @@
++name: Deploy Jekyll with Pagefind
++
++on:
++  push:
++    branches:
++      - master
++  workflow_dispatch:
++
++permissions:
++  contents: read
++  pages: write
++  id-token: write
++
++concurrency:
++  group: pages
++  cancel-in-progress: false
++
++jobs:
++  build:
++    runs-on: ubuntu-latest
++    steps:
++      - name: Checkout
++        uses: actions/checkout@v4
++
++      - name: Configure GitHub Pages
++        id: pages
++        uses: actions/configure-pages@v5
++
++      - name: Setup Ruby
++        uses: ruby/setup-ruby@v1
++        with:
++          ruby-version: "3.3"
++          bundler-cache: true
++
++      - name: Build Jekyll site
++        env:
++          JEKYLL_ENV: production
++        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
++
++      - name: Setup Node.js
++        uses: actions/setup-node@v4
++        with:
++          node-version: "22"
++
++      - name: Build Pagefind index
++        run: npx --yes pagefind@1.5.2 --site _site
++
++      - name: Upload Pages artifact
++        uses: actions/upload-pages-artifact@v3
++        with:
++          path: _site
++
++  deploy:
++    environment:
++      name: github-pages
++      url: ${{ steps.deployment.outputs.page_url }}
++    runs-on: ubuntu-latest
++    needs: build
++    steps:
++      - name: Deploy to GitHub Pages
++        id: deployment
++        uses: actions/deploy-pages@v4

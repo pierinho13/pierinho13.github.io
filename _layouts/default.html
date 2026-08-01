@@ -35,7 +35,7 @@
 <body>
   <a class="skip-link" href="#main-content">{% if current_lang == 'es' %}Saltar al contenido{% else %}Skip to content{% endif %}</a>
 
-  <header class="site-header">
+  <header class="site-header" data-pagefind-ignore>
     <div class="header-inner">
       <a class="brand" href="/{% if current_lang == 'es' %}es{% else %}en{% endif %}/" aria-label="K8sReady home">
         <span class="brand-mark" aria-hidden="true">
@@ -72,6 +72,10 @@
           </div>
         </nav>
 
+        <button class="search-trigger" id="search-trigger" type="button" aria-haspopup="dialog" aria-controls="search-dialog" aria-label="{% if current_lang == 'es' %}Buscar en K8sReady{% else %}Search K8sReady{% endif %}">
+          <span>{% if current_lang == 'es' %}Buscar{% else %}Search{% endif %}</span>
+          <kbd>{% if current_lang == 'es' %}Ctrl K{% else %}Ctrl K{% endif %}</kbd>
+        </button>
         <button class="icon-button" id="theme-toggle" type="button" aria-label="{% if current_lang == 'es' %}Cambiar tema{% else %}Toggle theme{% endif %}">
           <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
@@ -86,7 +90,7 @@
     </div>
   </header>
 
-  <main id="main-content" class="site-main">
+  <main id="main-content" class="site-main" data-pagefind-body>
     {% if page.homepage %}
       {{ content }}
     {% else %}
@@ -96,7 +100,28 @@
     {% endif %}
   </main>
 
-  <footer class="site-footer">
+  <div class="search-dialog" id="search-dialog" role="dialog" aria-modal="true" aria-labelledby="search-dialog-title" hidden data-pagefind-ignore>
+    <div class="search-dialog__backdrop" data-search-close></div>
+    <div class="search-dialog__panel">
+      <div class="search-dialog__header">
+        <div>
+          <p class="search-dialog__eyebrow">K8sReady</p>
+          <h2 id="search-dialog-title">{% if current_lang == 'es' %}Buscar contenido{% else %}Search content{% endif %}</h2>
+        </div>
+        <button class="search-dialog__close" type="button" data-search-close aria-label="{% if current_lang == 'es' %}Cerrar buscador{% else %}Close search{% endif %}">Esc</button>
+      </div>
+      <label class="search-dialog__input-wrap" for="site-search-input">
+        <span class="sr-only">{% if current_lang == 'es' %}Buscar en K8sReady{% else %}Search K8sReady{% endif %}</span>
+        <input id="site-search-input" class="search-dialog__input" type="search" autocomplete="off" spellcheck="false" placeholder="{% if current_lang == 'es' %}Buscar artículos, proyectos y tecnologías...{% else %}Search articles, projects and technologies...{% endif %}">
+      </label>
+      <div class="search-dialog__status" id="search-status" aria-live="polite">
+        {% if current_lang == 'es' %}Escribe para buscar en K8sReady.{% else %}Start typing to search K8sReady.{% endif %}
+      </div>
+      <div class="search-results" id="search-results"></div>
+    </div>
+  </div>
+
+  <footer class="site-footer" data-pagefind-ignore>
     <div class="footer-inner">
       <div class="footer-grid">
         <div class="footer-brand">
@@ -136,6 +161,7 @@
     </div>
   </footer>
 
+  <script src="/assets/js/search.js" defer></script>
   <script>
     (function () {
       var menuButton = document.getElementById('menu-toggle');
