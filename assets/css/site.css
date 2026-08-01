@@ -1119,6 +1119,23 @@ a {
   color: var(--text);
 }
 
+.post-comments {
+  margin-top: 52px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+
+.post-comments-title {
+  margin: 0 0 22px;
+  color: var(--text);
+  font-size: 1.55rem;
+}
+
+.post-comments .giscus,
+.post-comments .giscus-frame {
+  width: 100%;
+}
+
 .post-footer {
   margin-top: 58px;
   padding-top: 26px;
