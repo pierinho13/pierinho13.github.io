@@ -4,6 +4,7 @@ title: "Your GitHub organization is infrastructure too"
 date: 2026-07-31
 lang: en
 image: /assets/img/github-platform-operator-english.png
+description: "An open-source Kubernetes operator for declaratively managing GitHub repositories, teams, rulesets, access, environments, Actions secrets, and variables through GitOps with continuous reconciliation and safe adoption."
 excerpt: "GitHub configuration is platform state. I built github-platform-operator to manage repositories, rulesets, organization members, teams, access, environments, secrets, and variables through Kubernetes and GitOps, with continuous reconciliation and safe adoption."
 ---
 
