@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const owner = process.env.GITHUB_OWNER || "pierinho13";
 const token = process.env.GITHUB_TOKEN || "";
@@ -53,7 +54,7 @@ function decodeNumericEntities(value) {
     .replace(/&#([0-9]+);/g, (_, code) => String.fromCodePoint(Number.parseInt(code, 10)));
 }
 
-function htmlToText(html) {
+export function htmlToText(html) {
   return decodeNumericEntities(html)
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
@@ -66,7 +67,7 @@ function htmlToText(html) {
     .trim();
 }
 
-function parsePackageDownloads(html) {
+export function parsePackageDownloads(html) {
   const textMatch = htmlToText(html).match(/\bTotal downloads\b\s*([0-9][0-9,.\s]*)/i);
   const jsonMatch = html.match(/"(?:totalDownloads|total_downloads)"\s*:\s*([0-9]+)/i);
   const rawValue = textMatch?.[1] || jsonMatch?.[1];
@@ -101,7 +102,7 @@ async function readPrevious() {
   }
 }
 
-async function listAll(pathname, maxPages = 10) {
+export async function listAll(pathname, maxPages = 10) {
   const separator = pathname.includes("?") ? "&" : "?";
   const items = [];
 
@@ -114,7 +115,7 @@ async function listAll(pathname, maxPages = 10) {
   return items;
 }
 
-async function releaseData(repository) {
+export async function releaseData(repository) {
   const [latest, releases] = await Promise.all([
     github(`/repos/${owner}/${repository}/releases/latest`, { allow404: true }),
     listAll(`/repos/${owner}/${repository}/releases`)
@@ -175,7 +176,7 @@ async function repositoryData(repository) {
   return data;
 }
 
-function normalized(name) {
+export function normalized(name) {
   return name.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
@@ -220,39 +221,45 @@ async function aggregateTraefikPlugins() {
   };
 }
 
-const previous = await readPrevious();
-const projects = { ...(previous.projects || {}) };
+export async function main() {
+  const previous = await readPrevious();
+  const projects = { ...(previous.projects || {}) };
 
-const definitions = [
-  ["github-platform-operator", "github-platform-operator"],
-  ["kubectl-peek", "kubectl-peek"],
-  ["cmdpeek", "cmdpeek"]
-];
+  const definitions = [
+    ["github-platform-operator", "github-platform-operator"],
+    ["kubectl-peek", "kubectl-peek"],
+    ["cmdpeek", "cmdpeek"]
+  ];
 
-for (const [key, repository] of definitions) {
+  for (const [key, repository] of definitions) {
+    try {
+      projects[key] = await repositoryData(repository);
+      console.log(`Updated ${key}`);
+    } catch (error) {
+      console.warn(`Could not update ${key}; keeping previous data. ${error.message}`);
+    }
+  }
+
   try {
-    projects[key] = await repositoryData(repository);
-    console.log(`Updated ${key}`);
+    const aggregate = await aggregateTraefikPlugins();
+    if (aggregate.repositoryCount > 0) {
+      projects["traefik-plugins"] = aggregate;
+      console.log(`Updated traefik-plugins from ${aggregate.repositoryCount} repositories`);
+    } else {
+      console.warn("No Traefik plugin repositories were discovered; keeping previous data.");
+    }
   } catch (error) {
-    console.warn(`Could not update ${key}; keeping previous data. ${error.message}`);
+    console.warn(`Could not update traefik-plugins; keeping previous data. ${error.message}`);
   }
+
+  await mkdir(path.dirname(outputPath), { recursive: true });
+  await writeFile(
+    outputPath,
+    `${JSON.stringify({ generatedAt: new Date().toISOString(), projects }, null, 2)}\n`,
+    "utf8"
+  );
 }
 
-try {
-  const aggregate = await aggregateTraefikPlugins();
-  if (aggregate.repositoryCount > 0) {
-    projects["traefik-plugins"] = aggregate;
-    console.log(`Updated traefik-plugins from ${aggregate.repositoryCount} repositories`);
-  } else {
-    console.warn("No Traefik plugin repositories were discovered; keeping previous data.");
-  }
-} catch (error) {
-  console.warn(`Could not update traefik-plugins; keeping previous data. ${error.message}`);
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  await main();
 }
-
-await mkdir(path.dirname(outputPath), { recursive: true });
-await writeFile(
-  outputPath,
-  `${JSON.stringify({ generatedAt: new Date().toISOString(), projects }, null, 2)}\n`,
-  "utf8"
-);

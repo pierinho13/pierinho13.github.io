@@ -1,0 +1,10 @@
+{
+  "name": "k8sready-site",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -39,6 +39,9 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Test project metadata tooling
+        run: npm test
+
       - name: Fetch open-source project metadata
         env:
           GITHUB_TOKEN: ${{ github.token }}
