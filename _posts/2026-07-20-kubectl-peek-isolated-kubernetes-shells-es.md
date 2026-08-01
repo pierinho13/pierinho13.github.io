@@ -4,6 +4,7 @@ title: "kubectl-peek ahora abre shells aisladas de Kubernetes para cualquier con
 date: 2026-07-20
 lang: es
 image: https://github.com/user-attachments/assets/9eb0f303-cc02-4cc2-b434-ead0ceb10c35
+description: "kubectl-peek ahora permite abrir shells aisladas y conscientes del contexto mediante kubeconfigs temporales, para trabajar entre clusters y namespaces sin cambiar el contexto real ni repetir flags constantemente."
 excerpt: "kubectl-peek ahora permite abrir shells aisladas y conscientes del contexto mediante kubeconfigs temporales, para trabajar entre clusters y namespaces sin cambiar el contexto real ni repetir flags constantemente."
 ---
 

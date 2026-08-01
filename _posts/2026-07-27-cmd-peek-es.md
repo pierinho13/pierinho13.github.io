@@ -4,6 +4,7 @@ title: "cmdpeek te permite descubrir workflows de terminal sin memorizar aliases
 date: 2026-07-27
 lang: es
 image: https://github.com/user-attachments/assets/afc4dbc5-904a-4005-b221-21bff9f7fae3
+description: "cmdpeek es una paleta de comandos buscable para workflows reutilizables de terminal. Te permite encontrar comandos por intención usando nombres, títulos, descripciones, labels y el contenido del propio comando, resolver variables, revisar el resultado final y ejecutarlo de forma segura."
 excerpt: "cmdpeek es una paleta de comandos buscable para workflows reutilizables de terminal. Te permite encontrar comandos por intención usando nombres, títulos, descripciones, labels y el contenido del propio comando, resolver variables, revisar el resultado final y ejecutarlo de forma segura."
 ---
 

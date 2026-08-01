@@ -4,6 +4,7 @@ title: "kubectl-peek now opens isolated Kubernetes shells for any context and na
 date: 2026-07-20
 lang: en
 image: https://github.com/user-attachments/assets/9eb0f303-cc02-4cc2-b434-ead0ceb10c35
+description: "kubectl-peek now lets you open isolated, context-aware Kubernetes shells backed by temporary kubeconfigs, so you can work across clusters and namespaces without changing your real context or repeating flags."
 excerpt: "kubectl-peek now lets you open isolated, context-aware Kubernetes shells backed by temporary kubeconfigs, so you can work across clusters and namespaces without changing your real context or repeating flags."
 ---
 
