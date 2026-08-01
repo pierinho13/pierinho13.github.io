@@ -192,7 +192,7 @@ kubectl get crd githubrepositories.github.k8sready.com
 ### 4. Configure GitHub authentication
 
 ```bash
-export GITHUB_TOKEN='your-token'
+export GITHUB_TOKEN='your-token' 
 ```
 
 For GitHub Enterprise Server or a compatible API endpoint:
