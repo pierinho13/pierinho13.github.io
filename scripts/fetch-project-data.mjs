@@ -30,6 +30,69 @@ async function github(pathname, { allow404 = false } = {}) {
   return response.json();
 }
 
+async function githubHtml(url) {
+  const response = await fetch(url, {
+    headers: {
+      Accept: "text/html,application/xhtml+xml",
+      "Accept-Language": "en-US,en;q=0.9",
+      "User-Agent": "k8sready-project-metadata"
+    }
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`GitHub page ${response.status} for ${url}: ${body.slice(0, 240)}`);
+  }
+
+  return response.text();
+}
+
+function decodeNumericEntities(value) {
+  return value
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(Number.parseInt(code, 16)))
+    .replace(/&#([0-9]+);/g, (_, code) => String.fromCodePoint(Number.parseInt(code, 10)));
+}
+
+function htmlToText(html) {
+  return decodeNumericEntities(html)
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;|&ensp;|&emsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parsePackageDownloads(html) {
+  const textMatch = htmlToText(html).match(/\bTotal downloads\b\s*([0-9][0-9,.\s]*)/i);
+  const jsonMatch = html.match(/"(?:totalDownloads|total_downloads)"\s*:\s*([0-9]+)/i);
+  const rawValue = textMatch?.[1] || jsonMatch?.[1];
+
+  if (!rawValue) {
+    throw new Error('The "Total downloads" value was not found in the GitHub package page');
+  }
+
+  const downloads = Number.parseInt(rawValue.replace(/[^0-9]/g, ""), 10);
+  if (!Number.isSafeInteger(downloads) || downloads < 0) {
+    throw new Error(`Invalid GitHub package download count: ${rawValue}`);
+  }
+
+  return downloads;
+}
+
+async function packageDownloads(repository, packageName) {
+  const packageUrl = `https://github.com/${owner}/${repository}/pkgs/container/${encodeURIComponent(packageName)}`;
+  const html = await githubHtml(packageUrl);
+
+  return {
+    downloads: parsePackageDownloads(html),
+    packageUrl
+  };
+}
+
 async function readPrevious() {
   try {
     return JSON.parse(await readFile(outputPath, "utf8"));
@@ -75,7 +138,7 @@ async function repositoryData(repository) {
     releaseData(repository)
   ]);
 
-  return {
+  const data = {
     repository,
     url: repo.html_url,
     stars: repo.stargazers_count,
@@ -83,8 +146,33 @@ async function repositoryData(repository) {
     openIssues: repo.open_issues_count,
     latestRelease: releases.latestRelease,
     downloads: releases.downloads,
+    downloadsSource: "release-assets",
     updatedAt: repo.pushed_at || repo.updated_at
   };
+
+  if (repository === "github-platform-operator") {
+    try {
+      const packageData = await packageDownloads(
+        repository,
+        "charts/github-platform-operator"
+      );
+
+      data.releaseAssetDownloads = releases.downloads;
+      data.downloads = packageData.downloads;
+      data.downloadsSource = "github-package";
+      data.packageUrl = packageData.packageUrl;
+      console.log(`Read ${data.downloads} GHCR package downloads for ${repository}`);
+    } catch (error) {
+      // A zero here would incorrectly mean that nobody has pulled the OCI chart.
+      // Keep the metric unavailable instead of falling back to release assets.
+      data.releaseAssetDownloads = releases.downloads;
+      data.downloads = null;
+      data.downloadsSource = "github-package-unavailable";
+      console.warn(`Could not read GHCR package downloads for ${repository}. ${error.message}`);
+    }
+  }
+
+  return data;
 }
 
 function normalized(name) {
