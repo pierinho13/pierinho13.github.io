@@ -18,7 +18,7 @@
         "  projects | kubectl get projects | kubectl get pods",
         "  experience | cv | kubectl get experience",
         "  skills | kubectl get skills",
-        "  kubectl describe project <kubectl-peek|cmdpeek|traefik-plugins>",
+        "  kubectl describe project <github-platform-operator|kubectl-peek|cmdpeek|traefik-plugins>",
         "  contact",
         "  clear"
       ].join("\n"),
@@ -29,10 +29,11 @@
         "Location: Madrid, Spain"
       ].join("\n"),
       projects: [
-        "NAME              KIND                       LANGUAGE   STATUS",
-        "kubectl-peek      Kubernetes productivity    Go         active",
-        "cmdpeek           Developer productivity     Go         active",
-        "traefik-plugins   Middleware collection      Go         production"
+        "NAME                       KIND                       LANGUAGE   STATUS",
+        "github-platform-operator   GitHub platform operator   Go         active",
+        "kubectl-peek               Kubernetes productivity    Go         active",
+        "cmdpeek                    Developer productivity     Go         active",
+        "traefik-plugins            Middleware collection      Go         production"
       ].join("\n"),
       experience: [
         "COMPANY                  ROLE                        PERIOD",
@@ -59,6 +60,17 @@
       contactLink: "Open the contact page",
       projectUnknown: "Unknown project. Use kubectl get projects to list the available names.",
       projectsDetail: {
+        "github-platform-operator": {
+          text: [
+            "Name:        github-platform-operator",
+            "Purpose:     Kubernetes operator for declarative GitHub platform management",
+            "Highlights:  Repositories, teams, rulesets, access, environments, secrets and variables",
+            "Language:    Go",
+            "Status:      Active"
+          ].join("\n"),
+          label: "Open github-platform-operator on GitHub",
+          href: "https://github.com/pierinho13/github-platform-operator"
+        },
         "kubectl-peek": {
           text: [
             "Name:        kubectl-peek",
@@ -105,7 +117,7 @@
         "  projects | kubectl get projects | kubectl get pods",
         "  experience | cv | kubectl get experience",
         "  skills | kubectl get skills",
-        "  kubectl describe project <kubectl-peek|cmdpeek|traefik-plugins>",
+        "  kubectl describe project <github-platform-operator|kubectl-peek|cmdpeek|traefik-plugins>",
         "  contact",
         "  clear"
       ].join("\n"),
@@ -116,10 +128,11 @@
         "Ubicacion: Madrid, Espana"
       ].join("\n"),
       projects: [
-        "NAME              KIND                       LANGUAGE   STATUS",
-        "kubectl-peek      Productividad Kubernetes   Go         active",
-        "cmdpeek           Productividad developer    Go         active",
-        "traefik-plugins   Coleccion de middlewares   Go         production"
+        "NAME                       KIND                            LANGUAGE   STATUS",
+        "github-platform-operator   Operador de plataforma GitHub   Go         active",
+        "kubectl-peek               Productividad Kubernetes        Go         active",
+        "cmdpeek                    Productividad developer         Go         active",
+        "traefik-plugins            Coleccion de middlewares        Go         production"
       ].join("\n"),
       experience: [
         "EMPRESA                  ROL                         PERIODO",
@@ -146,6 +159,17 @@
       contactLink: "Abrir la pagina de contacto",
       projectUnknown: "Proyecto desconocido. Usa kubectl get projects para listar los nombres disponibles.",
       projectsDetail: {
+        "github-platform-operator": {
+          text: [
+            "Name:        github-platform-operator",
+            "Objetivo:    Operador de Kubernetes para gestionar plataformas GitHub de forma declarativa",
+            "Funciones:   Repositorios, equipos, rulesets, accesos, entornos, secretos y variables",
+            "Lenguaje:    Go",
+            "Estado:      Activo"
+          ].join("\n"),
+          label: "Abrir github-platform-operator en GitHub",
+          href: "https://github.com/pierinho13/github-platform-operator"
+        },
         "kubectl-peek": {
           text: [
             "Name:        kubectl-peek",
