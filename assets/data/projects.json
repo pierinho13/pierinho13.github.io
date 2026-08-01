@@ -1,0 +1,30 @@
+{
+  "generatedAt": null,
+  "projects": {
+    "github-platform-operator": {
+      "stars": null,
+      "downloads": null,
+      "latestRelease": null,
+      "updatedAt": null
+    },
+    "kubectl-peek": {
+      "stars": null,
+      "downloads": null,
+      "latestRelease": null,
+      "updatedAt": null
+    },
+    "cmdpeek": {
+      "stars": null,
+      "downloads": null,
+      "latestRelease": null,
+      "updatedAt": null
+    },
+    "traefik-plugins": {
+      "stars": null,
+      "downloads": null,
+      "latestRelease": null,
+      "updatedAt": null,
+      "repositoryCount": 3
+    }
+  }
+}

@@ -5,6 +5,8 @@ on:
     branches:
       - master
   workflow_dispatch:
+  schedule:
+    - cron: "20 5 * * *"
 
 permissions:
   contents: read
@@ -32,15 +34,20 @@ jobs:
           ruby-version: "3.3"
           bundler-cache: true
 
-      - name: Build Jekyll site
-        env:
-          JEKYLL_ENV: production
-        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+
+      - name: Fetch open-source project metadata
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/fetch-project-data.mjs
+
+      - name: Build Jekyll site
+        env:
+          JEKYLL_ENV: production
+        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
 
       - name: Build Pagefind index
         run: npx --yes pagefind@1.5.2 --site _site
