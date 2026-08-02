@@ -1,0 +1,57 @@
+<section
+  class="site-terminal"
+  id="site-terminal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="site-terminal-title"
+  data-language="{{ include.current_lang | default: 'en' }}"
+  data-pagefind-ignore
+  hidden>
+  <div class="site-terminal__window">
+    <header class="site-terminal__toolbar">
+      <div class="site-terminal__traffic-lights" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="site-terminal__identity">
+        <strong id="site-terminal-title">visitor@k8sready</strong>
+        <span data-terminal-status>read-only session</span>
+      </div>
+      <button class="site-terminal__close" type="button" data-terminal-close>
+        <span aria-hidden="true">Esc</span>
+        <span class="sr-only">Close terminal mode</span>
+      </button>
+    </header>
+
+    <div class="site-terminal__screen" data-terminal-screen>
+      <div
+        class="site-terminal__output"
+        data-terminal-output
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions text"></div>
+
+      <form class="site-terminal__form" data-terminal-form>
+        <span class="site-terminal__prompt" aria-hidden="true">visitor@k8sready:~$</span>
+        <label class="sr-only" for="site-terminal-input">Terminal command</label>
+        <input
+          id="site-terminal-input"
+          class="site-terminal__input"
+          data-terminal-input
+          type="text"
+          inputmode="text"
+          autocomplete="off"
+          autocapitalize="none"
+          spellcheck="false"
+          enterkeyhint="send">
+      </form>
+    </div>
+
+    <div class="site-terminal__quick-actions" aria-label="Suggested terminal commands">
+      <button type="button" data-terminal-command="help">help</button>
+      <button type="button" data-terminal-command="projects">projects</button>
+      <button type="button" data-terminal-command="blog">blog</button>
+      <button type="button" data-terminal-command="search kubernetes">search kubernetes</button>
+      <button type="button" data-terminal-command="exit">exit</button>
+    </div>
+  </div>
+</section>
