@@ -317,8 +317,7 @@ Las relaciones integradas y las definidas mediante reglas YAML se combinan en la
 ### Homebrew
 
 ```bash
-brew tap pierinho13/tools
-brew install --cask kubectl-peek
+brew install --cask pierinho13/tools/kubectl-peek
 ```
 
 ### GitHub Releases

@@ -316,8 +316,7 @@ Built-in and rule-based relationships are combined in the same `Used by` section
 ### Homebrew
 
 ```bash
-brew tap pierinho13/tools
-brew install --cask kubectl-peek
+brew install --cask pierinho13/tools/kubectl-peek
 ```
 
 ### GitHub Releases

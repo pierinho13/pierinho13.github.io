@@ -415,8 +415,7 @@ This makes the shell useful beyond a single `kubectl` command.
 ### Homebrew
 
 ```bash
-brew tap pierinho13/tools
-brew install --cask kubectl-peek
+brew install --cask pierinho13/tools/kubectl-peek
 ```
 
 Upgrade an existing installation:

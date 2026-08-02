@@ -62,7 +62,7 @@
       {
         id: "homebrew",
         label: copy.homebrew,
-        command: "brew tap pierinho13/tools\nbrew install --cask kubectl-peek"
+        command: "brew install --cask pierinho13/tools/kubectl-peek"
       },
       {
         id: "source",
@@ -74,7 +74,7 @@
       {
         id: "homebrew",
         label: copy.homebrew,
-        command: "brew tap pierinho13/tools\nbrew install --cask cmdpeek"
+        command: "brew install --cask pierinho13/tools/cmdpeek"
       },
       {
         id: "source",

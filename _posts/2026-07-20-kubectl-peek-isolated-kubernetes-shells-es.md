@@ -407,8 +407,7 @@ Esto hace que la shell sea útil más allá de un único comando de `kubectl`.
 ### Homebrew
 
 ```bash
-brew tap pierinho13/tools
-brew install --cask kubectl-peek
+brew install --cask pierinho13/tools/kubectl-peek
 ```
 
 Para actualizar una instalación existente:

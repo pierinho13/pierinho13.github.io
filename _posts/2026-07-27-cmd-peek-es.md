@@ -569,8 +569,7 @@ cmdpeek \
 Linux y macOS:
 
 ```bash
-brew tap pierinho13/tools
-brew install --cask cmdpeek
+brew install --cask pierinho13/tools/cmdpeek
 ```
 
 Actualizar:
