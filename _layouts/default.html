@@ -163,6 +163,37 @@
   </footer>
 
   <script src="/assets/js/search.js" defer></script>
+  <style>
+    .project-card--traefik-static .project-live-meta .project-meta-item:nth-child(2),
+    .project-card--traefik-static .project-live-meta .project-meta-item:nth-child(3) {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .project-card--traefik-static .project-live-meta .project-meta-item:nth-child(2) > *,
+    .project-card--traefik-static .project-live-meta .project-meta-item:nth-child(3) > * {
+      display: none;
+    }
+
+    .project-card--traefik-static .project-live-meta .project-meta-item:nth-child(2)::before {
+      content: "◆ 3 plugins";
+      font-weight: 700;
+    }
+
+    .project-card--traefik-static .project-live-meta .project-meta-item:nth-child(3)::before {
+      content: "◆ Principal contributor";
+      font-weight: 700;
+    }
+
+    html[lang="es"] .project-card--traefik-static .project-live-meta .project-meta-item:nth-child(3)::before {
+      content: "◆ Contribuidor principal";
+    }
+
+    .project-card--traefik-static .project-updated {
+      display: none;
+    }
+  </style>
   <script src="/assets/js/project-hub.js" defer></script>
   <script>
     (function () {
